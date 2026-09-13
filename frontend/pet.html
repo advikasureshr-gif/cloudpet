@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pet Haven - Bunbun</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;min-height:100vh;color:#35104f;background:linear-gradient(135deg,#35104f,#8f5bb3 45%,#f3a6c8);padding-bottom:40px}
+nav{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:22px;padding:14px 5%;background:rgba(53,16,79,.95);color:#fff}
+.logo{font-weight:800;font-size:1.3rem}.links{display:flex;gap:18px;flex:1}.links a{color:#fff;text-decoration:none;font-weight:600}.links a:hover{color:#f3b4d1}
+.right{display:flex;gap:10px;align-items:center}.coins{background:#c8a2e8;color:#35104f;padding:8px 13px;border-radius:20px;font-weight:800}.avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#f3a6c8;font-weight:800}
+main{width:min(1080px,92%);margin:30px auto}.back{color:white;text-decoration:none;font-weight:700;display:inline-block;margin-bottom:18px}
+.grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:22px}.card{background:#c8a2e8;border-radius:24px;padding:26px;box-shadow:0 16px 35px #2d0a4138}
+.visual{height:310px;display:grid;place-items:center;border-radius:22px;background:#ffffff47;overflow:hidden}.visual img{width:75%;height:75%;object-fit:contain;image-rendering:pixelated}
+h1{font-size:2rem;margin-top:12px}.info{color:#4a2460;margin:5px 0}.mood{display:inline-block;background:#fff8;padding:7px 13px;border-radius:20px;margin:8px}
+h2{font-size:1.15rem;margin:20px 0 14px}.trait,.stat{margin:13px 0}.row{display:flex;justify-content:space-between;font-weight:700;font-size:.9rem;margin-bottom:6px}.bar{height:10px;background:#fff8;border-radius:20px;overflow:hidden}.fill{height:100%;background:linear-gradient(90deg,#7a438f,#e987b3);border-radius:20px;transition:.3s}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}.action{border:0;border-radius:14px;padding:14px;background:#35104f;color:#fff;font-weight:800;font-size:1rem;cursor:pointer}.action:hover{opacity:.9;transform:translateY(-1px)}
+.weather{margin-top:20px;padding:15px;border-radius:16px;background:#fff5;color:#4a2460}.weather strong{color:#35104f}
+.overlay{position:fixed;inset:0;z-index:50;display:none;place-items:center;background:#190725b8;padding:20px}.overlay.show{display:grid}.cleanbox{position:relative;width:min(620px,100%);height:440px;background:#c8a2e8;border-radius:25px;text-align:center;padding:24px;overflow:hidden}.cleanbox p{color:#4a2460;margin-top:5px}.close{position:absolute;right:15px;top:10px;border:0;background:none;font-size:1.7rem;color:#35104f;cursor:pointer}
+.cleanpet{position:absolute;left:50%;top:53%;transform:translate(-50%,-50%);width:210px;height:210px;border-radius:50%;background:#fff5;display:grid;place-items:center}.cleanpet img{width:82%;height:82%;object-fit:contain;image-rendering:pixelated}
+.soap{position:absolute;left:20%;top:67%;width:70px;height:44px;border:0;border-radius:20px;background:linear-gradient(145deg,#fff,#f2b8df);font-size:1.8rem;cursor:grab;touch-action:none;box-shadow:0 8px 18px #35104f40}.bubble{position:absolute;border:3px solid #fffc;border-radius:50%;animation:bubble 1.2s ease-out forwards;pointer-events:none}@keyframes bubble{0%{transform:scale(.3);opacity:0}25%{opacity:1}100%{transform:translate(var(--x),var(--y)) scale(1.2);opacity:0}}
+.toast{position:fixed;bottom:25px;left:50%;transform:translate(-50%,80px);background:#35104f;color:#fff;padding:12px 18px;border-radius:20px;opacity:0;transition:.25s;z-index:100}.toast.show{transform:translate(-50%,0);opacity:1}
+@media(max-width:800px){nav{flex-wrap:wrap}.links{order:3;width:100%;justify-content:center;overflow:auto}.grid{grid-template-columns:1fr}}@media(max-width:480px){main{width:94%}.card{padding:20px}.visual{height:250px}}
+</style>
+</head>
+<body>
+<nav>
+ <div class="logo">🐾 Pet Haven</div>
+ <div class="links"><a href="home.html">Home</a><a href="#">AI Chat</a><a href="#">Shop</a><a href="#">Profile</a></div>
+ <div class="right"><span class="coins">🪙 250</span><span class="avatar">L</span></div>
+</nav>
+
+<main>
+<a class="back" href="home.html">← Back to Home</a>
+<div class="grid">
+<section class="card">
+ <div class="visual"><img id="pet" src="../animation_packs/32PixelBunny/32PixelBunny/GIF/BunnyIdle.gif" alt="Bunbun the rabbit"></div>
+ <h1>Bunbun</h1><p class="info">Rabbit • 2 years old</p><span class="mood" id="mood">😊 Happy</span>
+ <h2>Personality</h2>
+ <div class="trait"><div class="row"><span>❤️ Affection</span><span>80%</span></div><div class="bar"><div class="fill" style="width:80%"></div></div></div>
+ <div class="trait"><div class="row"><span>🎾 Playfulness</span><span>90%</span></div><div class="bar"><div class="fill" style="width:90%"></div></div></div>
+ <div class="trait"><div class="row"><span>😼 Independence</span><span>55%</span></div><div class="bar"><div class="fill" style="width:55%"></div></div></div>
+</section>
+
+<section class="card">
+ <h2 style="margin-top:0">🐰 Bunbun's Stats</h2>
+ <div id="stats"></div>
+ <h2>What should Bunbun do?</h2>
+ <div class="actions">
+  <button class="action" onclick="act('feed')">🥕 Feed</button>
+  <button class="action" onclick="act('play')">🎾 Play</button>
+  <button class="action" onclick="cleanStart()">🧼 Clean</button>
+  <button class="action" onclick="act('sleep')">😴 Sleep</button>
+ </div>
+ <div class="weather"><strong>☀️ Sunny • 28°C</strong><br>Bunbun is enjoying the sunny weather!<br><strong>Happiness +5 • Energy +3</strong></div>
+</section>
+</div>
+</main>
+
+<div class="overlay" id="overlay">
+ <div class="cleanbox" id="cleanbox">
+  <button class="close" onclick="cleanClose()">×</button>
+  <h2>🧼 Clean Bunbun!</h2><p>Drag the soap onto Bunbun to wash them.</p>
+  <div class="cleanpet" id="cleanpet"><img src="../animation_packs/32PixelBunny/32PixelBunny/GIF/BunnySitting.gif" alt="Bunbun"></div>
+  <button class="soap" id="soap">🧼</button>
+ </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const state={health:85,hunger:70,happiness:90,energy:75,hygiene:80};
+const anim={
+ idle:"../animation_packs/32PixelBunny/32PixelBunny/GIF/BunnyIdle.gif",
+ feed:"../animation_packs/32PixelBunny/32PixelBunny/GIF/BunnyCarrotSkill.gif",
+ play:"../animation_packs/32PixelBunny/32PixelBunny/GIF/BunnyJump.gif",
+ sleep:"../animation_packs/32PixelBunny/32PixelBunny/GIF/BunnySleep.gif"
+};
+const effects={
+ feed:{hunger:15,happiness:3,msg:"🥕 Bunbun enjoyed the carrot!"},
+ play:{happiness:10,energy:-10,hunger:-5,msg:"🎾 Bunbun had fun!"},
+ sleep:{energy:20,hunger:-5,msg:"😴 Bunbun had a nice nap!"}
+};
+function clamp(x){return Math.max(0,Math.min(100,x))}
+function render(){
+ const s=document.getElementById("stats");
+ s.innerHTML="";
+ const icons={health:"❤️",hunger:"🍖",happiness:"😊",energy:"⚡",hygiene:"🧼"};
+ for(const k in state){
+  s.innerHTML+=`<div class="stat"><div class="row"><span>${icons[k]} ${k[0].toUpperCase()+k.slice(1)}</span><span>${Math.round(state[k])}</span></div><div class="bar"><div class="fill" style="width:${state[k]}%"></div></div></div>`;
+ }
+ document.getElementById("mood").textContent=state.happiness>=75?"😊 Happy":state.happiness>=45?"😐 Okay":"🥺 Needs attention";
+}
+function act(type){
+ for(const k in effects[type]) if(k in state) state[k]=clamp(state[k]+effects[type][k]);
+ document.getElementById("pet").src=anim[type];
+ render(); toast(effects[type].msg);
+ setTimeout(()=>document.getElementById("pet").src=anim.idle,2500);
+}
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(window.tt);window.tt=setTimeout(()=>t.classList.remove("show"),2200)}
+function cleanStart(){document.getElementById("overlay").classList.add("show");const s=document.getElementById("soap");s.style.left="20%";s.style.top="67%";cleaned=false}
+function cleanClose(){document.getElementById("overlay").classList.remove("show")}
+let drag=false,ox=0,oy=0,cleaned=false;
+const soap=document.getElementById("soap"),box=document.getElementById("cleanbox"),pet=document.getElementById("cleanpet");
+soap.onpointerdown=e=>{drag=true;const r=soap.getBoundingClientRect();ox=e.clientX-r.left;oy=e.clientY-r.top;soap.setPointerCapture(e.pointerId)};
+soap.onpointermove=e=>{if(!drag)return;const r=box.getBoundingClientRect();let x=e.clientX-r.left-ox,y=e.clientY-r.top-oy;x=Math.max(5,Math.min(x,r.width-soap.offsetWidth-5));y=Math.max(60,Math.min(y,r.height-soap.offsetHeight-5));soap.style.left=x+"px";soap.style.top=y+"px";collision()};
+soap.onpointerup=()=>drag=false;
+function collision(){if(cleaned)return;const a=soap.getBoundingClientRect(),b=pet.getBoundingClientRect();if(a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top){cleaned=true;state.hygiene=clamp(state.hygiene+15);state.happiness=clamp(state.happiness+3);for(let i=0;i<14;i++){const q=document.createElement("i");q.className="bubble";q.style.width=q.style.height=10+Math.random()*20+"px";q.style.left=(b.left-box.getBoundingClientRect().left+50+Math.random()*110)+"px";q.style.top=(b.top-box.getBoundingClientRect().top+50+Math.random()*110)+"px";q.style.setProperty("--x",(-60+Math.random()*120)+"px");q.style.setProperty("--y",(-60-Math.random()*100)+"px");box.appendChild(q);setTimeout(()=>q.remove(),1200)}render();toast("🫧 Bunbun is squeaky clean!");setTimeout(()=>{cleanClose();cleaned=false},1300)}}
+render();
+</script>
+</body>
+</html>
