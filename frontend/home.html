@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pet Haven — Luna</title>
+<title>Pet Haven — Home</title>
 <style>
   :root {
     --bg-deep: #2c1250;
@@ -18,7 +18,7 @@
     --shadow: 0 12px 28px rgba(44, 18, 80, 0.35);
     --radius-lg: 28px;
     --radius-md: 20px;
-    --nav-h: 76px;
+    --radius-sm: 14px;
   }
 
   * { box-sizing: border-box; }
@@ -34,9 +34,8 @@
   }
 
   a { text-decoration: none; color: inherit; }
-  button { font-family: inherit; }
 
-  /* ---------- Navbar (matches Home) ---------- */
+  /* ---------- Navbar ---------- */
   .navbar {
     display: flex;
     align-items: center;
@@ -47,7 +46,7 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.15);
     position: sticky;
     top: 0;
-    z-index: 30;
+    z-index: 20;
   }
 
   .nav-brand {
@@ -57,6 +56,7 @@
     font-weight: 800;
     font-size: 1.2rem;
     color: #fff;
+    letter-spacing: 0.2px;
   }
 
   .nav-links {
@@ -121,310 +121,229 @@
     font-size: 0.85rem;
   }
 
-  /* ---------- Main content ---------- */
+  /* ---------- Main ---------- */
   .main {
-    max-width: 640px;
+    max-width: 1080px;
     margin: 0 auto;
-    padding: 30px 28px 64px;
+    padding: 36px 28px 64px;
   }
 
-  .back-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: rgba(255, 255, 255, 0.85);
-    font-weight: 700;
-    font-size: 0.9rem;
-    margin-bottom: 18px;
-  }
-
-  .back-link:hover { color: #fff; }
-
-  /* Pet stage — the animated focal point */
-  .pet-stage {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 6px;
-  }
-
-  .pet-animation {
-    width: 220px;
-    height: 220px;
-    filter: drop-shadow(0 18px 30px rgba(44, 18, 80, 0.45));
-  }
-
-  .pet-body {
-    animation: breathe 3.2s ease-in-out infinite;
-    transform-box: fill-box;
-    transform-origin: center;
-  }
-
-  @keyframes breathe {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.035); }
-  }
-
-  .eye {
-    transform-box: fill-box;
-    transform-origin: center;
-    animation: blink 4.5s ease-in-out infinite;
-  }
-
-  .eye.right { animation-delay: 0.05s; }
-
-  @keyframes blink {
-    0%, 92%, 100% { transform: scaleY(1); }
-    95% { transform: scaleY(0.12); }
-  }
-
-  .tail {
-    transform-box: fill-box;
-    transform-origin: 0% 60%;
-    animation: wag 2.4s ease-in-out infinite;
-  }
-
-  @keyframes wag {
-    0%, 100% { transform: rotate(-7deg); }
-    50% { transform: rotate(9deg); }
-  }
-
-  .mood-low .pet-body { animation-duration: 5s; }
-  .mood-low .tail { animation-duration: 4.5s; }
-  .mood-high .tail { animation-duration: 1.3s; }
-
-  .ear-left, .ear-right {
-    transform-box: fill-box;
-    transform-origin: bottom center;
-    transition: transform 0.4s ease;
-  }
-
-  .mood-low .ear-left { transform: rotate(-12deg); }
-  .mood-low .ear-right { transform: rotate(12deg); }
-
-  /* Identity block */
-  .pet-identity {
-    text-align: center;
-    margin-bottom: 22px;
-  }
-
-  .pet-name {
+  .greeting h1 {
     color: #fff;
-    font-size: 1.9rem;
-    font-weight: 800;
-    margin: 4px 0 2px;
+    font-size: 1.8rem;
+    margin: 0 0 4px;
   }
 
-  .pet-breed {
+  .greeting p {
     color: rgba(255, 255, 255, 0.8);
+    margin: 0 0 28px;
     font-size: 1rem;
-    font-weight: 600;
   }
 
-  .pet-age {
-    color: rgba(255, 255, 255, 0.65);
-    font-size: 0.85rem;
-    margin-top: 2px;
-  }
-
-  .pet-mood-tag {
-    display: inline-block;
-    margin-top: 12px;
-    background: rgba(255, 255, 255, 0.15);
-    color: #fff;
-    font-weight: 700;
-    font-size: 0.82rem;
-    padding: 6px 16px;
-    border-radius: 999px;
-  }
-
-  /* Actions — directly below identity */
-  .actions-grid {
+  .top-row {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
-    margin-bottom: 28px;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 36px;
   }
 
-  .action-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    background: var(--card-soft);
-    border: 2px solid transparent;
-    border-radius: var(--radius-md);
-    padding: 16px 8px;
-    font-weight: 800;
-    font-size: 0.88rem;
-    color: var(--ink);
-    cursor: pointer;
-    box-shadow: var(--shadow);
-    transition: transform 0.15s ease, border-color 0.2s ease;
-  }
-
-  .action-btn .icon { font-size: 1.6rem; }
-
-  .action-btn:hover {
-    transform: translateY(-3px);
-    border-color: var(--purple);
-  }
-
-  .action-btn:active { transform: translateY(0); }
-
-  /* Cards below actions */
   .card {
     background: var(--card);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow);
     padding: 22px 24px;
-    margin-bottom: 20px;
   }
 
-  .card h2 { margin: 0 0 14px; font-size: 1.05rem; }
-
+  /* Weather card */
   .weather-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     background: linear-gradient(135deg, var(--card-soft), var(--card));
   }
 
-  .weather-row {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 12px;
+  .weather-icon {
+    font-size: 3rem;
+    line-height: 1;
   }
 
-  .weather-row .icon { font-size: 2rem; }
-  .weather-row .label { font-weight: 800; font-size: 1rem; }
+  .weather-info h2 {
+    margin: 0 0 2px;
+    font-size: 1.6rem;
+  }
 
-  .weather-effect {
+  .weather-info .temp {
+    font-size: 1rem;
     color: var(--ink-soft);
-    font-size: 0.9rem;
-    line-height: 1.5;
-  }
-
-  .weather-effect strong { color: var(--ink); }
-
-  .effect-tags { display: flex; gap: 10px; margin-top: 10px; }
-
-  .effect-tag {
-    background: #e6d3f5;
-    color: var(--purple);
-    font-weight: 800;
-    font-size: 0.8rem;
-    padding: 5px 12px;
-    border-radius: 999px;
-  }
-
-  /* ---------- Collapsible stats drawer (bars live here) ---------- */
-  .stats-drawer {
-    position: fixed;
-    top: var(--nav-h);
-    right: 0;
-    height: calc(100vh - var(--nav-h));
-    display: flex;
-    align-items: flex-start;
-    z-index: 25;
-  }
-
-  .drawer-tab {
-    width: 46px;
-    height: 130px;
-    align-self: center;
-    background: var(--purple);
-    color: #fff;
-    border: none;
-    border-radius: 16px 0 0 16px;
-    box-shadow: -6px 0 20px rgba(44, 18, 80, 0.3);
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    font-weight: 800;
-    font-size: 0.78rem;
-    transition: background 0.2s ease;
-  }
-
-  .drawer-tab:hover { background: var(--pink); }
-
-  .drawer-tab .chevron { font-size: 0.95rem; transition: transform 0.3s ease; }
-
-  .drawer-tab .tab-label {
-    writing-mode: vertical-rl;
-    letter-spacing: 0.5px;
-  }
-
-  .drawer-panel {
-    width: 320px;
-    height: 100%;
-    background: var(--card);
-    box-shadow: -10px 0 30px rgba(44, 18, 80, 0.35);
-    overflow: hidden;
-    transition: width 0.32s ease;
-  }
-
-  .drawer-panel.collapsed { width: 0; }
-
-  .drawer-content {
-    width: 320px;
-    height: 100%;
-    overflow-y: auto;
-    padding: 26px 22px;
-  }
-
-  .drawer-content h2 {
-    margin: 0 0 16px;
-    font-size: 1.05rem;
-    color: var(--ink);
-  }
-
-  .drawer-content h2.section-gap { margin-top: 26px; }
-
-  .bar-row {
-    display: grid;
-    grid-template-columns: 128px 1fr 30px;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 13px;
-    font-size: 0.82rem;
     font-weight: 700;
   }
 
-  .bar-row:last-child { margin-bottom: 0; }
+  .weather-note {
+    margin-top: 8px;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    max-width: 190px;
+    text-align: right;
+  }
 
-  .bar-track {
+  /* Coins/Quest card */
+  .quest-card .quest-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .quest-coins {
+    font-size: 1.25rem;
+    font-weight: 800;
+  }
+
+  .quest-title {
+    font-weight: 800;
+    margin: 6px 0 4px;
+    font-size: 1rem;
+  }
+
+  .quest-desc {
+    color: var(--ink-soft);
+    font-size: 0.88rem;
+    margin-bottom: 12px;
+  }
+
+  .progress-track {
     background: #e6d3f5;
     border-radius: 999px;
-    height: 11px;
+    height: 10px;
     overflow: hidden;
+    margin-bottom: 14px;
   }
 
-  .bar-fill {
+  .progress-fill {
     height: 100%;
-    border-radius: 999px;
+    width: 50%;
     background: linear-gradient(90deg, var(--pink), var(--purple));
-    transition: width 0.4s ease;
+    border-radius: 999px;
   }
 
-  .bar-value { text-align: right; color: var(--ink-soft); }
+  .quest-btn {
+    display: inline-block;
+    background: var(--purple);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 9px 18px;
+    border-radius: 999px;
+    transition: transform 0.15s ease, background 0.2s ease;
+  }
+
+  .quest-btn:hover {
+    background: var(--pink);
+    transform: translateY(-1px);
+  }
+
+  /* Pets section */
+  .section-title {
+    color: #fff;
+    font-size: 1.25rem;
+    margin: 0 0 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .pet-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+
+  .pet-card {
+    background: var(--card);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow);
+    padding: 18px;
+    text-align: center;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    cursor: pointer;
+  }
+
+  .pet-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 32px rgba(44, 18, 80, 0.42);
+  }
+
+  .pet-avatar {
+    width: 78px;
+    height: 78px;
+    margin: 0 auto 10px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.2rem;
+    background: linear-gradient(135deg, #ffd6ec, #d9b8fb);
+  }
+
+  .pet-name {
+    font-weight: 800;
+    font-size: 1.05rem;
+    margin-bottom: 2px;
+  }
+
+  .pet-breed {
+    color: var(--ink-soft);
+    font-size: 0.82rem;
+    margin-bottom: 12px;
+  }
+
+  .pet-stats {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 14px;
+  }
+
+  .pet-stats span { white-space: nowrap; }
+
+  .view-pet {
+    display: inline-block;
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: var(--purple);
+    border: 2px solid var(--purple);
+    border-radius: 999px;
+    padding: 6px 16px;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  .pet-card:hover .view-pet {
+    background: var(--purple);
+    color: #fff;
+  }
 
   /* Responsive */
-  @media (max-width: 700px) {
+  @media (max-width: 760px) {
     .navbar { flex-wrap: wrap; gap: 12px; padding: 14px 18px; }
     .nav-links { order: 3; width: 100%; justify-content: center; }
-    .actions-grid { grid-template-columns: repeat(2, 1fr); }
-    .drawer-panel { width: 86vw; }
-    .drawer-panel.collapsed { width: 0; }
-    .drawer-content { width: 86vw; }
-    .pet-animation { width: 170px; height: 170px; }
+    .top-row { grid-template-columns: 1fr; }
+    .pet-grid { grid-template-columns: repeat(2, 1fr); }
+    .weather-note { display: none; }
+  }
+
+  @media (max-width: 480px) {
+    .pet-grid { grid-template-columns: 1fr 1fr; }
+    .main { padding: 24px 16px 48px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .pet-body, .eye, .tail, .action-btn, .bar-fill, .drawer-panel { animation: none; transition: none; }
+    .pet-card, .quest-btn { transition: none; }
   }
 
-  a:focus-visible, button:focus-visible {
+  a:focus-visible, .pet-card:focus-visible {
     outline: 3px solid #fff;
     outline-offset: 2px;
   }
@@ -435,7 +354,7 @@
   <nav class="navbar">
     <div class="nav-brand">🐾 Pet Haven</div>
     <div class="nav-links">
-      <a href="home.html">Home</a>
+      <a href="home.html" class="active">Home</a>
       <a href="ai-chat.html">AI Chat</a>
       <a href="shop.html">Shop</a>
       <a href="profile.html">Profile</a>
@@ -448,224 +367,87 @@
   </nav>
 
   <main class="main">
-    <a href="home.html" class="back-link">← Back to Home</a>
-
-    <div class="pet-stage">
-      <svg class="pet-animation mood-mid" id="petAnimation" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
-        <!-- tail -->
-        <path class="tail" d="M170,150 C205,140 210,110 195,90 C205,115 200,140 170,155 Z" fill="#d9b8fb"/>
-        <!-- body -->
-        <g class="pet-body">
-          <ellipse cx="110" cy="150" rx="62" ry="46" fill="#eccbf7"/>
-          <!-- ears -->
-          <path class="ear-left" d="M62,70 L45,25 L88,58 Z" fill="#d9b8fb"/>
-          <path class="ear-right" d="M158,70 L175,25 L132,58 Z" fill="#d9b8fb"/>
-          <path d="M65,66 L55,38 L82,58 Z" fill="#ff9fc7"/>
-          <path d="M155,66 L165,38 L138,58 Z" fill="#ff9fc7"/>
-          <!-- head -->
-          <circle cx="110" cy="95" r="55" fill="#f4dcfb"/>
-          <!-- eyes -->
-          <circle class="eye left" cx="90" cy="92" r="7" fill="#3a1a5c"/>
-          <circle class="eye right" cx="130" cy="92" r="7" fill="#3a1a5c"/>
-          <circle cx="92.5" cy="89.5" r="2" fill="#fff"/>
-          <circle cx="132.5" cy="89.5" r="2" fill="#fff"/>
-          <!-- nose -->
-          <path d="M105,105 L115,105 L110,111 Z" fill="#ff6fa5"/>
-          <!-- mouth -->
-          <path id="petMouth" d="M110,111 Q110,118 100,116" stroke="#3a1a5c" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-          <path d="M110,111 Q110,118 120,116" stroke="#3a1a5c" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-          <!-- whiskers -->
-          <line x1="58" y1="98" x2="30" y2="92" stroke="#c79fe0" stroke-width="2"/>
-          <line x1="58" y1="106" x2="30" y2="108" stroke="#c79fe0" stroke-width="2"/>
-          <line x1="162" y1="98" x2="190" y2="92" stroke="#c79fe0" stroke-width="2"/>
-          <line x1="162" y1="106" x2="190" y2="108" stroke="#c79fe0" stroke-width="2"/>
-        </g>
-      </svg>
+    <div class="greeting">
+      <h1>Good morning, Lexie! 🌸</h1>
+      <p>Here's how your pets are doing today.</p>
     </div>
 
-    <div class="pet-identity">
-      <div class="pet-name">Luna</div>
-      <div class="pet-breed">Persian Cat</div>
-      <div class="pet-age">Age: 2</div>
-      <div class="pet-mood-tag" id="moodTag">Feeling content</div>
-    </div>
-
-    <div class="actions-grid">
-      <button class="action-btn" onclick="doAction('feed')">
-        <span class="icon">🍖</span> Feed
-      </button>
-      <button class="action-btn" onclick="doAction('play')">
-        <span class="icon">🎾</span> Play
-      </button>
-      <button class="action-btn" onclick="doAction('clean')">
-        <span class="icon">🧼</span> Clean
-      </button>
-      <button class="action-btn" onclick="doAction('sleep')">
-        <span class="icon">😴</span> Sleep
-      </button>
-    </div>
-
-    <div class="card weather-card">
-      <h2>Today's Weather</h2>
-      <div class="weather-row">
-        <span class="icon">☀️</span>
-        <span class="label">Sunny, 28°C</span>
+    <div class="top-row">
+      <div class="card weather-card">
+        <div style="display:flex; align-items:center; gap:16px;">
+          <div class="weather-icon">☀️</div>
+          <div class="weather-info">
+            <h2>Sunny</h2>
+            <div class="temp">28°C</div>
+          </div>
+        </div>
+        <div class="weather-note">A beautiful day! Your pets should be full of energy.</div>
       </div>
-      <div class="weather-effect">
-        <strong>Luna loves sunny weather!</strong> Persian cats tend to soak up warm days —
-        her energy and happiness are getting a small boost today. Other pets may react
-        differently to the same weather.
-      </div>
-      <div class="effect-tags">
-        <span class="effect-tag">Happiness +5</span>
-        <span class="effect-tag">Energy +3</span>
+
+      <div class="card quest-card">
+        <div class="quest-header">
+          <div class="quest-coins">🪙 250 Coins</div>
+        </div>
+        <div class="quest-title">Today's Quest</div>
+        <div class="quest-desc">Feed 2 pets · Progress: 1 / 2</div>
+        <div class="progress-track"><div class="progress-fill"></div></div>
+        <a href="quests.html" class="quest-btn">View Quests</a>
       </div>
     </div>
 
-    <a href="home.html" class="back-link">← Back to Home</a>
+    <h2 class="section-title">My Pets 🐾</h2>
+    <div class="pet-grid">
+
+      <a class="pet-card" href="pet.html?id=1" tabindex="0">
+        <div class="pet-avatar">🐱</div>
+        <div class="pet-name">Luna</div>
+        <div class="pet-breed">Persian Cat</div>
+        <div class="pet-stats"><span>❤️ 85</span><span>🍖 72</span></div>
+        <span class="view-pet">View Pet →</span>
+      </a>
+
+      <a class="pet-card" href="pet.html?id=2" tabindex="0">
+        <div class="pet-avatar">🐶</div>
+        <div class="pet-name">Biscuit</div>
+        <div class="pet-breed">Corgi</div>
+        <div class="pet-stats"><span>❤️ 95</span><span>🍖 60</span></div>
+        <span class="view-pet">View Pet →</span>
+      </a>
+
+      <a class="pet-card" href="pet.html?id=3" tabindex="0">
+        <div class="pet-avatar">🐰</div>
+        <div class="pet-name">Clover</div>
+        <div class="pet-breed">Holland Lop</div>
+        <div class="pet-stats"><span>❤️ 72</span><span>🍖 88</span></div>
+        <span class="view-pet">View Pet →</span>
+      </a>
+
+      <a class="pet-card" href="pet.html?id=4" tabindex="0">
+        <div class="pet-avatar">🦊</div>
+        <div class="pet-name">Ember</div>
+        <div class="pet-breed">Fennec Fox</div>
+        <div class="pet-stats"><span>❤️ 64</span><span>🍖 55</span></div>
+        <span class="view-pet">View Pet →</span>
+      </a>
+
+      <a class="pet-card" href="pet.html?id=5" tabindex="0">
+        <div class="pet-avatar">🐹</div>
+        <div class="pet-name">Waffle</div>
+        <div class="pet-breed">Hamster</div>
+        <div class="pet-stats"><span>❤️ 91</span><span>🍖 80</span></div>
+        <span class="view-pet">View Pet →</span>
+      </a>
+
+      <a class="pet-card" href="pet.html?id=6" tabindex="0">
+        <div class="pet-avatar">🐢</div>
+        <div class="pet-name">Shelly</div>
+        <div class="pet-breed">Box Turtle</div>
+        <div class="pet-stats"><span>❤️ 78</span><span>🍖 90</span></div>
+        <span class="view-pet">View Pet →</span>
+      </a>
+
+    </div>
   </main>
-
-  <!-- Collapsible stats drawer: Personality + Status bars live here -->
-  <aside class="stats-drawer">
-    <button class="drawer-tab" id="drawerTab" onclick="toggleDrawer()" aria-expanded="true" aria-controls="drawerPanel">
-      <span class="chevron" id="drawerChevron">▶</span>
-      <span class="tab-label">Stats</span>
-    </button>
-    <div class="drawer-panel" id="drawerPanel">
-      <div class="drawer-content">
-        <h2>Personality</h2>
-        <div class="bar-row">
-          <span>❤️ Affection</span>
-          <div class="bar-track"><div class="bar-fill" style="width:80%"></div></div>
-          <span class="bar-value">80</span>
-        </div>
-        <div class="bar-row">
-          <span>🎾 Playfulness</span>
-          <div class="bar-track"><div class="bar-fill" style="width:90%"></div></div>
-          <span class="bar-value">90</span>
-        </div>
-        <div class="bar-row">
-          <span>😼 Independence</span>
-          <div class="bar-track"><div class="bar-fill" style="width:60%"></div></div>
-          <span class="bar-value">60</span>
-        </div>
-
-        <h2 class="section-gap">Status</h2>
-        <div class="bar-row">
-          <span>❤️ Health</span>
-          <div class="bar-track"><div class="bar-fill" id="bar-health" style="width:85%"></div></div>
-          <span class="bar-value" id="val-health">85</span>
-        </div>
-        <div class="bar-row">
-          <span>🍖 Hunger</span>
-          <div class="bar-track"><div class="bar-fill" id="bar-hunger" style="width:72%"></div></div>
-          <span class="bar-value" id="val-hunger">72</span>
-        </div>
-        <div class="bar-row">
-          <span>😊 Happiness</span>
-          <div class="bar-track"><div class="bar-fill" id="bar-happiness" style="width:90%"></div></div>
-          <span class="bar-value" id="val-happiness">90</span>
-        </div>
-        <div class="bar-row">
-          <span>⚡ Energy</span>
-          <div class="bar-track"><div class="bar-fill" id="bar-energy" style="width:65%"></div></div>
-          <span class="bar-value" id="val-energy">65</span>
-        </div>
-        <div class="bar-row">
-          <span>🧼 Hygiene</span>
-          <div class="bar-track"><div class="bar-fill" id="bar-hygiene" style="width:80%"></div></div>
-          <span class="bar-value" id="val-hygiene">80</span>
-        </div>
-      </div>
-    </div>
-  </aside>
-
-  <div class="toast" id="toast" style="position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--purple);color:#fff;font-weight:700;font-size:0.9rem;padding:12px 22px;border-radius:999px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity 0.25s ease, transform 0.25s ease;z-index:50;"></div>
-
-  <script>
-    // Set the real navbar height so the drawer sits flush beneath it.
-    document.documentElement.style.setProperty('--nav-h', document.querySelector('.navbar').offsetHeight + 'px');
-
-    // Mock pet state — will eventually come from the backend/ML pipeline.
-    const state = { health: 85, hunger: 72, happiness: 90, energy: 65, hygiene: 80 };
-
-    const mouths = {
-      high: "M95,111 Q110,124 125,111",
-      mid:  "M110,111 Q110,118 100,116",
-      low:  "M95,118 Q110,106 125,118"
-    };
-
-    function clamp(n) { return Math.max(0, Math.min(100, n)); }
-
-    function render() {
-      Object.keys(state).forEach((key) => {
-        document.getElementById(`bar-${key}`).style.width = state[key] + '%';
-        document.getElementById(`val-${key}`).textContent = state[key];
-      });
-
-      const avg = Object.values(state).reduce((a, b) => a + b, 0) / Object.values(state).length;
-      const moodTag = document.getElementById('moodTag');
-      const petAnim = document.getElementById('petAnimation');
-      const mouth = document.getElementById('petMouth');
-
-      petAnim.classList.remove('mood-high', 'mood-mid', 'mood-low');
-
-      if (avg >= 80) {
-        moodTag.textContent = 'Feeling great!';
-        petAnim.classList.add('mood-high');
-        mouth.setAttribute('d', mouths.high);
-      } else if (avg >= 55) {
-        moodTag.textContent = 'Feeling content';
-        petAnim.classList.add('mood-mid');
-        mouth.setAttribute('d', mouths.mid);
-      } else {
-        moodTag.textContent = 'Could use some attention';
-        petAnim.classList.add('mood-low');
-        mouth.setAttribute('d', mouths.low);
-      }
-    }
-
-    // Placeholder deltas only — real effects belong to the backend/ML logic.
-    const actionEffects = {
-      feed:  { hunger: +18, happiness: +4,  label: 'Luna enjoyed her meal!' },
-      play:  { happiness: +12, energy: -8,  label: 'Luna had fun playing!' },
-      clean: { hygiene: +25, happiness: +2, label: 'Luna feels fresh and clean!' },
-      sleep: { energy: +20, hunger: -5,     label: 'Luna took a cozy nap.' }
-    };
-
-    function doAction(type) {
-      const effect = actionEffects[type];
-      Object.keys(effect).forEach((key) => {
-        if (key in state) state[key] = clamp(state[key] + effect[key]);
-      });
-      render();
-      showToast(effect.label);
-    }
-
-    let toastTimer;
-    function showToast(message) {
-      const toast = document.getElementById('toast');
-      toast.textContent = message;
-      toast.style.opacity = '1';
-      toast.style.transform = 'translateX(-50%) translateY(0)';
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateX(-50%) translateY(20px)';
-      }, 2200);
-    }
-
-    function toggleDrawer() {
-      const panel = document.getElementById('drawerPanel');
-      const chevron = document.getElementById('drawerChevron');
-      const tab = document.getElementById('drawerTab');
-      const collapsed = panel.classList.toggle('collapsed');
-      chevron.textContent = collapsed ? '◀' : '▶';
-      tab.setAttribute('aria-expanded', String(!collapsed));
-    }
-
-    render();
-  </script>
 
 </body>
 </html>
