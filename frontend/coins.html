@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coins - Pet Haven</title>
+
+  <style>
+    :root {
+      --purple: #6c4ab6;
+      --light-purple: #f3efff;
+      --pink: #ff8fb3;
+      --text: #30264d;
+      --muted: #7c7394;
+      --white: #ffffff;
+      --border: #e8e1f5;
+      --green: #58b88a;
+      --yellow: #f5b942;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #faf8ff;
+      color: var(--text);
+    }
+
+    /* NAVBAR */
+    .navbar {
+      height: 72px;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-brand {
+      font-size: 22px;
+      font-weight: bold;
+      color: var(--purple);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 28px;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .nav-links a:hover,
+    .nav-links a.active {
+      color: var(--purple);
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .coin-pill {
+      background: #fff5cf;
+      color: #9b7010;
+      padding: 9px 15px;
+      border-radius: 20px;
+      font-weight: bold;
+    }
+
+    .avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--purple);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    .logout-link {
+      color: var(--muted);
+      text-decoration: none;
+    }
+
+    /* MAIN */
+    .container {
+      max-width: 1150px;
+      margin: auto;
+      padding: 40px 25px 60px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #eee7ff, #fff1f7);
+      border-radius: 24px;
+      padding: 35px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .hero h1 {
+      font-size: 34px;
+      margin-bottom: 10px;
+    }
+
+    .hero p {
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .balance {
+      background: white;
+      border-radius: 18px;
+      padding: 20px 30px;
+      text-align: center;
+      box-shadow: 0 8px 25px rgba(70, 50, 110, 0.08);
+    }
+
+    .balance-label {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+
+    .balance-number {
+      font-size: 32px;
+      font-weight: bold;
+      color: #a47712;
+    }
+
+    /* SECTION */
+    .section {
+      margin-top: 35px;
+    }
+
+    .section-title {
+      font-size: 24px;
+      margin-bottom: 18px;
+    }
+
+    /* QUESTS */
+    .quest-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    .quest-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px;
+    }
+
+    .quest-icon {
+      font-size: 30px;
+      margin-bottom: 12px;
+    }
+
+    .quest-card h3 {
+      margin-bottom: 8px;
+    }
+
+    .quest-card p {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 15px;
+    }
+
+    .reward {
+      color: #a47712;
+      font-weight: bold;
+    }
+
+    .quest-button {
+      margin-top: 15px;
+      border: none;
+      background: var(--purple);
+      color: white;
+      padding: 9px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .quest-button:hover {
+      opacity: 0.9;
+    }
+
+    .quest-button.completed {
+      background: var(--green);
+      cursor: default;
+    }
+
+    /* ACHIEVEMENTS */
+    .achievement-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+    }
+
+    .achievement {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .achievement-icon {
+      font-size: 35px;
+      margin-bottom: 10px;
+    }
+
+    .achievement h3 {
+      font-size: 16px;
+      margin-bottom: 7px;
+    }
+
+    .achievement p {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .achievement-reward {
+      margin-top: 10px;
+      color: #a47712;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    /* DISCOVERIES */
+    .discovery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    .discovery {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px;
+    }
+
+    .discovery-icon {
+      font-size: 30px;
+      margin-bottom: 10px;
+    }
+
+    .discovery h3 {
+      margin-bottom: 8px;
+    }
+
+    .discovery p {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .discovery-reward {
+      margin-top: 12px;
+      color: #a47712;
+      font-weight: bold;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 800px) {
+      .navbar {
+        padding: 0 15px;
+      }
+
+      .nav-links {
+        gap: 12px;
+      }
+
+      .hero {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+      }
+
+      .quest-grid,
+      .achievement-grid,
+      .discovery-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    /* WEBSITE NOTIFICATION */
+    .notification {
+        position: fixed;
+        top: 90px;
+        right: 30px;
+        background: white;
+        color: var(--text);
+        padding: 16px 22px;
+        border-radius: 14px;
+        box-shadow: 0 8px 30px rgba(50, 35, 90, 0.18);
+        border: 1px solid var(--border);
+        font-weight: 600;
+        z-index: 9999;
+        animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateX(120%);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="notification" class="notification" style="display: none;"></div>
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-brand">🐾 Pet Haven</div>
+
+    <div class="nav-links">
+      <a href="home.html">Home</a>
+      <a href="ai-chat.html">AI Chat</a>
+      <a href="shop.html">Shop</a>
+      <a href="coins.html" class="active">Coins</a>
+      <a href="profile.html">Profile</a>
+    </div>
+
+    <div class="nav-right">
+      <div class="coin-pill" id="navCoins">🪙 0</div>
+      <div class="avatar">L</div>
+      <a href="login.html" class="logout-link">Logout</a>
+    </div>
+  </nav>
+
+
+  <main class="container">
+
+    <!-- HERO -->
+    <section class="hero">
+      <div>
+        <h1>🪙 Earn Coins</h1>
+        <p>Complete quests, unlock achievements and discover hidden surprises!</p>
+      </div>
+
+      <div class="balance">
+        <div class="balance-label">Your Balance</div>
+        <div class="balance-number" id="coinBalance">🪙 0</div>
+      </div>
+    </section>
+
+
+    <!-- DAILY QUESTS -->
+    <section class="section">
+      <h2 class="section-title">🎯 Daily Quests</h2>
+
+      <div class="quest-grid">
+
+        <div class="quest-card">
+          <div class="quest-icon">🍎</div>
+          <h3>Feed Your Pet</h3>
+          <p>Give your pet a tasty meal today.</p>
+          <div class="reward">🪙 +20 Coins</div>
+          <button class="quest-button" onclick="completeQuest(this, 'feed', 20)">
+            Claim Reward
+          </button>
+        </div>
+
+        <div class="quest-card">
+          <div class="quest-icon">🎮</div>
+          <h3>Play With Your Pet</h3>
+          <p>Spend some fun time playing with your pet.</p>
+          <div class="reward">🪙 +25 Coins</div>
+          <button class="quest-button" onclick="completeQuest(this, 'play', 25)">
+            Claim Reward
+          </button>
+        </div>
+
+        <div class="quest-card">
+          <div class="quest-icon">🧼</div>
+          <h3>Keep It Clean</h3>
+          <p>Clean your pet and keep them happy.</p>
+          <div class="reward">🪙 +15 Coins</div>
+          <button class="quest-button" onclick="completeQuest(this, 'clean', 15)">
+            Claim Reward
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- ACHIEVEMENTS -->
+    <section class="section">
+      <h2 class="section-title">🏆 Achievements</h2>
+
+      <div class="achievement-grid">
+
+        <div class="achievement" id="firstStepsAchievement">
+            <div class="achievement-icon">🌱</div>
+            <h3>First Steps</h3>
+            <p>Complete your first pet activity.</p>
+            <div class="achievement-reward" id="firstStepsReward">
+                🪙 +50
+            </div>
+        </div>
+
+        <div class="achievement" id="petLoverAchievement">
+            <div class="achievement-icon">❤️</div>
+            <h3>Pet Lover</h3>
+            <p>Take care of your pet regularly.</p>
+            <div class="achievement-reward" id="petLoverReward">
+                🔒 Locked • 🪙 +75 Coins
+            </div>
+        </div>
+
+        <div class="achievement" id="superOwnerAchievement">
+            <div class="achievement-icon">⭐</div>
+            <h3>Super Owner</h3>
+            <p>Complete 10 daily quests.</p>
+            <div class="achievement-reward" id="superOwnerReward">
+                🔒 Locked • 🪙 +100 Coins
+            </div>
+        </div>
+
+        <div class="achievement" id="petHavenProAchievement">
+            <div class="achievement-icon">👑</div>
+            <h3>Pet Haven Pro</h3>
+            <p>Unlock all major achievements.</p>
+            <div class="achievement-reward" id="petHavenProReward">
+                🔒 Locked • 🪙 +250 Coins
+            </div>
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- HIDDEN DISCOVERIES -->
+    <section class="section">
+      <h2 class="section-title">🔮 Hidden Discoveries</h2>
+
+      <div class="discovery-grid">
+
+        <div class="discovery" id="rainbowDiscovery">
+            <div class="discovery-icon">🌈</div>
+            <h3>Rainbow Surprise</h3>
+            <p>Discover a special surprise while exploring Pet Haven.</p>
+            <div class="discovery-reward" id="rainbowReward">
+                🔒 Hidden • 🪙 +30 Coins
+            </div>
+        </div>
+
+        <div class="discovery" id="nightOwlDiscovery">
+            <div class="discovery-icon">🌙</div>
+            <h3>Night Owl</h3>
+            <p>Visit your pet during the night to discover something special.</p>
+            <div class="discovery-reward" id="nightOwlReward">
+                🔒 Hidden • 🪙 +40 Coins
+            </div>
+        </div>
+
+        <div class="discovery" id="mysteryFriendDiscovery">
+            <div class="discovery-icon">✨</div>
+            <h3>Mystery Friend</h3>
+            <p>Interact with your pet enough times to uncover this secret.</p>
+            <div class="discovery-reward" id="mysteryFriendReward">
+                🔒 Hidden • 🪙 +60 Coins
+            </div>
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- PET SPECIFIC DISCOVERIES -->
+    <section class="section">
+      <h2 class="section-title">🐾 Pet-Specific Discoveries</h2>
+
+      <div class="discovery-grid">
+
+        <div class="discovery" id="catDiscovery">
+            <div class="discovery-icon">🐱</div>
+            <h3>Cat Discovery</h3>
+            <p>Unlock a special discovery by taking care of a cat.</p>
+            <div class="discovery-reward" id="catReward">
+                🔒 Hidden • 🪙 +50 Coins
+            </div>
+        </div>
+
+        <div class="discovery" id="dogDiscovery">
+            <div class="discovery-icon">🐶</div>
+            <h3>Dog Discovery</h3>
+            <p>Unlock a special discovery by taking care of a dog.</p>
+            <div class="discovery-reward" id="dogReward">
+                🔒 Hidden • 🪙 +50 Coins
+            </div>
+        </div>
+
+        <div class="discovery" id="rabbitDiscovery">
+            <div class="discovery-icon">🐰</div>
+            <h3>Rabbit Discovery</h3>
+            <p>Unlock a special discovery by taking care of a rabbit.</p>
+            <div class="discovery-reward" id="rabbitReward">
+                🔒 Hidden • 🪙 +50 Coins
+            </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+
+  <!-- SHARED STATE -->
+  <script src="js/state.js"></script>
+
+  <script>
+    function updateCoinsDisplay() {
+      const coins = getCoins();
+
+      document.getElementById("coinBalance").textContent =
+        "🪙 " + coins;
+
+      document.getElementById("navCoins").textContent =
+        "🪙 " + coins;
+    }
+
+    function getToday() {
+        const today = new Date();
+
+        return today.getFullYear() + "-" +
+            String(today.getMonth() + 1).padStart(2, "0") + "-" +
+            String(today.getDate()).padStart(2, "0");
+    }
+
+        function isQuestCompleted(quest) {
+        const savedDate = localStorage.getItem("cloudpet_quest_date");
+
+        if (savedDate !== getToday()) {
+            return false;
+        }
+
+        return localStorage.getItem("cloudpet_quest_" + quest) === "true";
+        }
+
+    function showNotification(message) {
+        const notification = document.getElementById("notification");
+
+        notification.textContent = message;
+        notification.style.display = "block";
+
+        setTimeout(() => {
+            notification.style.display = "none";
+        }, 2500);
+    }
+    function completeQuest(button, quest, reward) {
+
+        // Prevent claiming the same quest reward twice in one day
+        const rewardKey = "cloudpet_reward_claimed_" + quest;
+
+        if (localStorage.getItem(rewardKey) === getToday()) {
+            showNotification(
+            "🌙 This quest is already tucked in for today! ✨ Come back tomorrow for more coins, little explorer! 🐾"
+            );
+            return;
+        }
+
+        // Check if the actual pet activity was completed
+        if (!isQuestCompleted(quest)) {
+            showNotification(
+            "🐾 Your pet is waiting for you! Go give them some love first, then come back for your coins! 💕"
+            );
+            return;
+        }
+
+        // Award coins
+        addCoins(reward);
+        let completedQuests =
+            Number(localStorage.getItem("cloudpet_completed_quests")) || 0;
+
+        completedQuests++;
+
+        localStorage.setItem(
+            "cloudpet_completed_quests",
+            completedQuests
+        );
+        let completedActivities =
+            Number(localStorage.getItem("cloudpet_completed_activities")) || 0;
+
+        completedActivities++;
+
+        localStorage.setItem(
+            "cloudpet_completed_activities",
+            completedActivities
+        );
+
+        // Remember that today's reward has been claimed
+        localStorage.setItem(rewardKey, getToday());
+
+        button.textContent = "Completed ✓";
+        button.classList.add("completed");
+
+        updateCoinsDisplay();
+        checkAchievements();
+
+        showNotification(
+        "🎉 Yay! You earned " + reward + " coins! Your pet is proud of you! 🐾💛"
+        );
+    }
+
+    function updateQuestButtons() {
+        const quests = [
+            {
+            quest: "feed",
+            reward: 20,
+            button: document.querySelectorAll(".quest-button")[0]
+            },
+            {
+            quest: "play",
+            reward: 25,
+            button: document.querySelectorAll(".quest-button")[1]
+            },
+            {
+            quest: "clean",
+            reward: 15,
+            button: document.querySelectorAll(".quest-button")[2]
+            }
+        ];
+
+        quests.forEach(item => {
+            if (
+            isQuestCompleted(item.quest) &&
+            localStorage.getItem(
+                "cloudpet_reward_claimed_" + item.quest
+            ) === getToday()
+            ) {
+            item.button.textContent = "Completed ✓";
+            item.button.classList.add("completed");
+            }
+        });
+    }
+    function checkAchievements() {
+        const firstSteps = document.getElementById("firstStepsAchievement");
+        const firstStepsReward = document.getElementById("firstStepsReward");
+
+        const activities = [
+            localStorage.getItem("cloudpet_quest_feed"),
+            localStorage.getItem("cloudpet_quest_play"),
+            localStorage.getItem("cloudpet_quest_clean")
+        ];
+
+        const hasCompletedActivity = activities.includes("true");
+
+        const achievementClaimed =
+            localStorage.getItem("cloudpet_achievement_first_steps");
+
+        if (hasCompletedActivity) {
+
+            if (achievementClaimed !== "true") {
+            addCoins(50);
+
+            localStorage.setItem(
+                "cloudpet_achievement_first_steps",
+                "true"
+            );
+
+            showNotification(
+                "🏆 First Steps unlocked! You earned 50 coins! Your pet adventure is officially underway! 🐾✨"
+            );
+            }
+
+            firstStepsReward.textContent = "🏆 Unlocked • 🪙 +50 Coins";
+            firstSteps.style.opacity = "1";
+
+        } else {
+
+            firstStepsReward.textContent = "🔒 Locked • 🪙 +50 Coins";
+            firstSteps.style.opacity = "0.65";
+        }
+        const petLover = document.getElementById("petLoverAchievement");
+        const petLoverReward = document.getElementById("petLoverReward");
+
+        const allActivitiesCompleted =
+            localStorage.getItem("cloudpet_quest_feed") === "true" &&
+            localStorage.getItem("cloudpet_quest_play") === "true" &&
+            localStorage.getItem("cloudpet_quest_clean") === "true";
+
+        const petLoverClaimed =
+            localStorage.getItem("cloudpet_achievement_pet_lover");
+
+        if (allActivitiesCompleted) {
+
+            if (petLoverClaimed !== "true") {
+                addCoins(75);
+
+                localStorage.setItem(
+                    "cloudpet_achievement_pet_lover",
+                    "true"
+                );
+
+                showNotification(
+                    "❤️ Pet Lover unlocked! You earned 75 coins! Your pet knows they're loved! 🐾💕"
+                );
+            }
+
+            petLoverReward.textContent =
+            "🏆 Unlocked • 🪙 +75 Coins";
+
+            petLover.style.opacity = "1";
+
+        } else {
+
+            petLoverReward.textContent =
+            "🔒 Locked • 🪙 +75 Coins";
+
+            petLover.style.opacity = "0.65";
+        }
+        const superOwner =
+            document.getElementById("superOwnerAchievement");
+
+        const superOwnerReward =
+            document.getElementById("superOwnerReward");
+
+        const completedQuests =
+            Number(localStorage.getItem("cloudpet_completed_quests")) || 0;
+
+        const superOwnerClaimed =
+            localStorage.getItem("cloudpet_achievement_super_owner");
+
+        if (completedQuests >= 10) {
+
+            if (superOwnerClaimed !== "true") {
+            addCoins(100);
+
+            localStorage.setItem(
+                "cloudpet_achievement_super_owner",
+                "true"
+            );
+
+            showNotification(
+                "⭐ Super Owner unlocked! You earned 100 coins! Your pet-care skills are legendary! 🐾👑"
+            );
+        }
+
+        superOwnerReward.textContent =
+            "🏆 Unlocked • 🪙 +100 Coins";
+
+        superOwner.style.opacity = "1";
+
+        } else {
+
+            superOwnerReward.textContent =
+            "🔒 Locked • 🪙 +100 Coins";
+
+            superOwner.style.opacity = "0.65";
+        }
+        const petHavenPro =
+            document.getElementById("petHavenProAchievement");
+
+        const petHavenProReward =
+            document.getElementById("petHavenProReward");
+
+        const firstStepsUnlocked =
+            localStorage.getItem("cloudpet_achievement_first_steps") === "true";
+
+        const petLoverUnlocked =
+            localStorage.getItem("cloudpet_achievement_pet_lover") === "true";
+
+        const superOwnerUnlocked =
+            localStorage.getItem("cloudpet_achievement_super_owner") === "true";
+
+        const petHavenProClaimed =
+            localStorage.getItem("cloudpet_achievement_pet_haven_pro");
+
+        if (
+            firstStepsUnlocked &&
+            petLoverUnlocked &&
+            superOwnerUnlocked
+        ) {
+
+        if (petHavenProClaimed !== "true") {
+            addCoins(250);
+
+            localStorage.setItem(
+            "cloudpet_achievement_pet_haven_pro",
+            "true"
+            );
+
+            showNotification(
+            "👑 Pet Haven Pro unlocked! You earned 250 coins! You're officially a Pet Haven legend! 🐾✨"
+            );
+        }
+
+        petHavenProReward.textContent =
+            "🏆 Unlocked • 🪙 +250 Coins";
+
+        petHavenPro.style.opacity = "1";
+
+        } else {
+
+        petHavenProReward.textContent =
+            "🔒 Locked • 🪙 +250 Coins";
+
+        petHavenPro.style.opacity = "0.65";
+        }
+    }
+    function checkDiscoveries() {
+        const rainbowDiscovery =
+            document.getElementById("rainbowDiscovery");
+
+        const rainbowReward =
+            document.getElementById("rainbowReward");
+
+        const completedActivities =
+            Number(localStorage.getItem("cloudpet_completed_activities")) || 0;
+
+        const rainbowClaimed =
+            localStorage.getItem("cloudpet_discovery_rainbow");
+
+        if (completedActivities >= 5) {
+
+            if (rainbowClaimed !== "true") {
+            addCoins(30);
+
+            localStorage.setItem(
+                "cloudpet_discovery_rainbow",
+                "true"
+            );
+
+            showNotification(
+                "🌈 You found a Rainbow Surprise! ✨ 30 coins just floated into your treasure pouch! 🪙🐾"
+            );
+            }
+
+            rainbowReward.textContent =
+            "✨ Discovered • 🪙 +30 Coins";
+
+            rainbowDiscovery.style.opacity = "1";
+
+        } else {
+
+            rainbowReward.textContent =
+            "🔒 Hidden • 🪙 +30 Coins";
+
+            rainbowDiscovery.style.opacity = "0.65";
+        }
+    }
+    function checkNightOwl() {
+        const nightOwlDiscovery =
+            document.getElementById("nightOwlDiscovery");
+
+        const nightOwlReward =
+            document.getElementById("nightOwlReward");
+
+        const currentHour = new Date().getHours();
+
+        const isNight =
+            currentHour >= 20 || currentHour < 5;
+
+        const nightOwlClaimed =
+            localStorage.getItem("cloudpet_discovery_night_owl");
+
+        if (isNight) {
+
+            if (nightOwlClaimed !== "true") {
+            addCoins(40);
+
+            localStorage.setItem(
+                "cloudpet_discovery_night_owl",
+                "true"
+            );
+
+            showNotification(
+                "🌙 Shhh... you discovered the Night Owl secret! ✨ 40 coins for your late-night adventure! 🪙🐾"
+            );
+            }
+
+            nightOwlReward.textContent =
+            "✨ Discovered • 🪙 +40 Coins";
+
+            nightOwlDiscovery.style.opacity = "1";
+
+        } else {
+
+            nightOwlReward.textContent =
+            "🔒 Hidden • 🪙 +40 Coins";
+
+            nightOwlDiscovery.style.opacity = "0.65";
+        }
+    }
+    function checkMysteryFriend() {
+        const mysteryFriend =
+            document.getElementById("mysteryFriendDiscovery");
+
+        const mysteryFriendReward =
+            document.getElementById("mysteryFriendReward");
+
+        const completedActivities =
+            Number(localStorage.getItem("cloudpet_completed_activities")) || 0;
+
+        const mysteryFriendClaimed =
+            localStorage.getItem("cloudpet_discovery_mystery_friend");
+
+        if (completedActivities >= 10) {
+
+            if (mysteryFriendClaimed !== "true") {
+            addCoins(60);
+
+            localStorage.setItem(
+                "cloudpet_discovery_mystery_friend",
+                "true"
+            );
+
+            showNotification(
+                "✨ A mysterious friend noticed your love for your pet! You discovered a secret and earned 60 coins! 🐾💫"
+            );
+            }
+
+            mysteryFriendReward.textContent =
+            "✨ Discovered • 🪙 +60 Coins";
+
+            mysteryFriend.style.opacity = "1";
+
+        } else {
+
+            mysteryFriendReward.textContent =
+            "🔒 Hidden • 🪙 +60 Coins";
+
+            mysteryFriend.style.opacity = "0.65";
+        }
+    }
+    updateCoinsDisplay();
+    updateQuestButtons();
+    checkAchievements();
+    checkDiscoveries();
+    checkNightOwl();
+    checkMysteryFriend();
+  </script>
+
+</body>
+</html>
