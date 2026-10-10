@@ -6,62 +6,101 @@
   <title>Coins - Pet Haven</title>
 
   <style>
-    :root {
-      --purple: #6c4ab6;
-      --light-purple: #f3efff;
-      --pink: #ff8fb3;
-      --text: #30264d;
-      --muted: #7c7394;
-      --white: #ffffff;
-      --border: #e8e1f5;
-      --green: #58b88a;
-      --yellow: #f5b942;
-    }
+      :root {
+        --bg-deep: #2c1250;
+        --bg-mid: #6a2f8f;
+        --bg-light: #d68ecb;
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
-    }
+        --card: #f2e6fb;
+        --card-soft: #f8effc;
 
-    body {
-      background: #faf8ff;
-      color: var(--text);
-    }
+        --ink: #3a1a5c;
+        --ink-soft: #6b4a8f;
+
+        --pink: #ff6fa5;
+        --purple: #8c4fd6;
+
+        --white: #ffffff;
+        --border: #e6d3f5;
+
+        --green: #58b88a;
+        --yellow: #f5b942;
+
+        --shadow: 0 12px 28px rgba(44, 18, 80, 0.35);
+
+        --radius-lg: 28px;
+        --radius-md: 20px;
+        --radius-sm: 14px;
+      }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Nunito', 'Segoe UI', system-ui, sans-serif;
+}
+
+body {
+  background: linear-gradient(
+    160deg,
+    var(--bg-deep) 0%,
+    var(--bg-mid) 45%,
+    var(--bg-light) 100%
+  );
+  background-attachment: fixed;
+  color: var(--ink);
+  min-height: 100vh;
+}
 
     /* NAVBAR */
     .navbar {
-      height: 72px;
-      background: white;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 40px;
-      border-bottom: 1px solid var(--border);
-    }
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 32px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
 
     .nav-brand {
-      font-size: 22px;
-      font-weight: bold;
-      color: var(--purple);
-    }
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: #fff;
+  letter-spacing: 0.2px;
+}
 
-    .nav-links {
-      display: flex;
-      gap: 28px;
-    }
+.nav-links {
+  display: flex;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 6px;
+  border-radius: 999px;
+}
 
-    .nav-links a {
-      text-decoration: none;
-      color: var(--muted);
-      font-weight: 600;
-    }
+.nav-links a {
+  padding: 8px 18px;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 700;
+  font-size: 0.92rem;
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease;
+}
 
-    .nav-links a:hover,
-    .nav-links a.active {
-      color: var(--purple);
-    }
+.nav-links a:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.nav-links a.active {
+  background: #fff;
+  color: var(--purple);
+}
 
     .nav-right {
       display: flex;
@@ -69,30 +108,38 @@
       gap: 18px;
     }
 
-    .coin-pill {
-      background: #fff5cf;
-      color: #9b7010;
-      padding: 9px 15px;
-      border-radius: 20px;
-      font-weight: bold;
-    }
+.coin-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 8px 16px;
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.9rem;
+}
 
-    .avatar {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: var(--purple);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-    }
+.avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--pink), var(--purple));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 800;
+  font-size: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+}
 
-    .logout-link {
-      color: var(--muted);
-      text-decoration: none;
-    }
+.logout-link {
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-decoration: none;
+}
 
     /* MAIN */
     .container {
@@ -102,35 +149,38 @@
     }
 
     .hero {
-      background: linear-gradient(135deg, #eee7ff, #fff1f7);
-      border-radius: 24px;
-      padding: 35px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 30px;
-    }
+  background: linear-gradient(135deg, var(--card-soft), var(--card));
+  border-radius: var(--radius-lg);
+  padding: 35px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  box-shadow: var(--shadow);
+}
 
     .hero h1 {
-      font-size: 34px;
-      margin-bottom: 10px;
-    }
+  font-size: 34px;
+  margin-bottom: 10px;
+  color: var(--ink);
+  font-weight: 800;
+}
 
     .hero p {
-      color: var(--muted);
-      font-size: 16px;
-    }
+  color: var(--ink-soft);
+  font-size: 16px;
+}
 
     .balance {
-      background: white;
-      border-radius: 18px;
-      padding: 20px 30px;
-      text-align: center;
-      box-shadow: 0 8px 25px rgba(70, 50, 110, 0.08);
-    }
+  background: var(--card-soft);
+  border-radius: var(--radius-md);
+  padding: 20px 30px;
+  text-align: center;
+  box-shadow: 0 8px 25px rgba(70, 50, 110, 0.08);
+}
 
     .balance-label {
-      color: var(--muted);
+      color: var(--ink-soft);
       font-size: 14px;
       margin-bottom: 5px;
     }
@@ -146,10 +196,11 @@
       margin-top: 35px;
     }
 
-    .section-title {
-      font-size: 24px;
-      margin-bottom: 18px;
-    }
+.section-title {
+  font-size: 24px;
+  margin-bottom: 18px;
+  color: #fff;
+}
 
     /* QUESTS */
     .quest-grid {
@@ -158,12 +209,13 @@
       gap: 18px;
     }
 
-    .quest-card {
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 22px;
-    }
+.quest-card {
+  background: var(--card);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 22px;
+  box-shadow: var(--shadow);
+}
 
     .quest-icon {
       font-size: 30px;
@@ -213,13 +265,14 @@
       gap: 18px;
     }
 
-    .achievement {
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 20px;
-      text-align: center;
-    }
+.achievement {
+  background: var(--card);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 20px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
 
     .achievement-icon {
       font-size: 35px;
@@ -251,12 +304,13 @@
       gap: 18px;
     }
 
-    .discovery {
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 22px;
-    }
+.discovery {
+  background: var(--card);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 22px;
+  box-shadow: var(--shadow);
+}
 
     .discovery-icon {
       font-size: 30px;
@@ -328,6 +382,20 @@
             opacity: 1;
         }
     }
+    /* PET-SPECIFIC DISCOVERY STATES */
+
+.discovery.locked {
+  background: rgba(230, 211, 245, 0.72);
+  opacity: 0.75;
+  filter: saturate(0.75);
+}
+
+.discovery.unlocked {
+  background: var(--card);
+  opacity: 1;
+  filter: none;
+  box-shadow: var(--shadow);
+}
   </style>
 </head>
 
@@ -499,7 +567,7 @@
 
       <div class="discovery-grid">
 
-        <div class="discovery" id="catDiscovery">
+        <div class="discovery locked" id="catDiscovery">
             <div class="discovery-icon">🐱</div>
             <h3>Cat Discovery</h3>
             <p>Unlock a special discovery by taking care of a cat.</p>
@@ -508,7 +576,7 @@
             </div>
         </div>
 
-        <div class="discovery" id="dogDiscovery">
+        <div class="discovery locked" id="dogDiscovery">
             <div class="discovery-icon">🐶</div>
             <h3>Dog Discovery</h3>
             <p>Unlock a special discovery by taking care of a dog.</p>
@@ -517,7 +585,7 @@
             </div>
         </div>
 
-        <div class="discovery" id="rabbitDiscovery">
+        <div class="discovery locked" id="rabbitDiscovery">
             <div class="discovery-icon">🐰</div>
             <h3>Rabbit Discovery</h3>
             <p>Unlock a special discovery by taking care of a rabbit.</p>
@@ -866,6 +934,84 @@
             rainbowDiscovery.style.opacity = "0.65";
         }
     }
+    function checkPetDiscoveries() {
+
+  // Cat Discovery
+  if (localStorage.getItem("cloudpet_discovery_cat") === "true") {
+    document.getElementById("catDiscovery").classList.remove("locked");
+    document.getElementById("catDiscovery").classList.add("unlocked");
+    const rewardKey = "cloudpet_discovery_reward_cat";
+
+    if (localStorage.getItem(rewardKey) !== "true") {
+
+      addCoins(50);
+
+      localStorage.setItem(rewardKey, "true");
+
+      document.getElementById("catReward").textContent =
+        "🔓 Unlocked • 🪙 +50 Coins";
+
+      showNotification(
+        "🐱 Cat Discovery unlocked! You earned 50 coins! Luna is purring with pride! ✨"
+      );
+    } else {
+      document.getElementById("catReward").textContent =
+        "🔓 Unlocked • 🪙 +50 Coins";
+    }
+  }
+
+
+  // Dog Discovery
+  if (localStorage.getItem("cloudpet_discovery_dog") === "true") {
+    document.getElementById("dogDiscovery").classList.remove("locked");
+    document.getElementById("dogDiscovery").classList.add("unlocked");
+    const rewardKey = "cloudpet_discovery_reward_dog";
+
+    if (localStorage.getItem(rewardKey) !== "true") {
+
+      addCoins(50);
+
+      localStorage.setItem(rewardKey, "true");
+
+      document.getElementById("dogReward").textContent =
+        "🔓 Unlocked • 🪙 +50 Coins";
+
+      showNotification(
+        "🐶 Dog Discovery unlocked! You earned 50 coins! Your furry friend is wagging with joy! ✨"
+      );
+    } else {
+      document.getElementById("dogReward").textContent =
+        "🔓 Unlocked • 🪙 +50 Coins";
+    }
+  }
+
+
+  // Rabbit Discovery
+  if (localStorage.getItem("cloudpet_discovery_rabbit") === "true") {
+    document.getElementById("rabbitDiscovery").classList.remove("locked");
+    document.getElementById("rabbitDiscovery").classList.add("unlocked");
+    const rewardKey = "cloudpet_discovery_reward_rabbit";
+
+    if (localStorage.getItem(rewardKey) !== "true") {
+
+      addCoins(50);
+
+      localStorage.setItem(rewardKey, "true");
+
+      document.getElementById("rabbitReward").textContent =
+        "🔓 Unlocked • 🪙 +50 Coins";
+
+      showNotification(
+        "🐰 Rabbit Discovery unlocked! You earned 50 coins! Your bunny is doing a happy little hop! ✨"
+      );
+    } else {
+      document.getElementById("rabbitReward").textContent =
+        "🔓 Unlocked • 🪙 +50 Coins";
+    }
+  }
+
+  updateCoinsDisplay();
+}
     function checkNightOwl() {
         const nightOwlDiscovery =
             document.getElementById("nightOwlDiscovery");
@@ -956,6 +1102,7 @@
     checkDiscoveries();
     checkNightOwl();
     checkMysteryFriend();
+    checkPetDiscoveries();
   </script>
 
 </body>

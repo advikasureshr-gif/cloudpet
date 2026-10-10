@@ -5,6 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pet Haven - Sign Up</title>
 <style>
+    .signup-avatar-options {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 7px;
+    margin-top: 8px;
+}
+
+.signup-avatar-option {
+    border: 2px solid transparent;
+    background: white;
+    border-radius: 12px;
+    padding: 7px 4px;
+    font-size: 1.35rem;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.signup-avatar-option:hover {
+    transform: translateY(-2px);
+    border-color: #8f5bb3;
+}
+
+.signup-avatar-option.selected {
+    border-color: #8c4fd6;
+    background: #ead8f5;
+    box-shadow: 0 0 0 2px rgba(140, 79, 214, 0.15);
+}
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
@@ -122,7 +149,7 @@ input:focus {
     <h1>Create Account</h1>
     <p class="subtitle">Join the pet adventure!</p>
 
-    <form id="signupForm">
+    <form id="signupForm" novalidate>
         <div class="form-group">
             <label for="username">Username</label>
             <input type="text" id="username" name="username"
@@ -131,8 +158,15 @@ input:focus {
 
         <div class="form-group">
             <label for="email">Email</label>
-            <input type="email" id="email" name="email"
-                   placeholder="Enter your email" required>
+            <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="Enter your email"
+                autocomplete="email"
+                maxlength="254"
+                required
+            >
         </div>
 
         <div class="form-group">
@@ -147,6 +181,39 @@ input:focus {
                    name="confirmPassword"
                    placeholder="Confirm your password" required>
         </div>
+        <div class="form-group">
+
+    <label>Choose your character</label>
+
+    <div class="signup-avatar-options">
+
+        <button type="button" class="signup-avatar-option selected"
+                data-avatar="👩🏻">👩🏻</button>
+
+        <button type="button" class="signup-avatar-option"
+                data-avatar="👨🏻">👨🏻</button>
+
+        <button type="button" class="signup-avatar-option"
+                data-avatar="🐱">🐱</button>
+
+        <button type="button" class="signup-avatar-option"
+                data-avatar="🐶">🐶</button>
+
+        <button type="button" class="signup-avatar-option"
+                data-avatar="🐰">🐰</button>
+
+        <button type="button" class="signup-avatar-option"
+                data-avatar="🦊">🦊</button>
+
+        <button type="button" class="signup-avatar-option"
+                data-avatar="🐹">🐹</button>
+
+        <button type="button" class="signup-avatar-option"
+                data-avatar="🐢">🐢</button>
+
+    </div>
+
+</div>
 
         <button type="submit" class="signup-button">Create Account</button>
         <p id="message" class="message"></p>
@@ -159,20 +226,128 @@ input:focus {
 </main>
 
 <script>
-document.getElementById("signupForm").addEventListener("submit", function(event) {
-    event.preventDefault();
 
-    const password = document.getElementById("password").value;
-    const confirmPassword = document.getElementById("confirmPassword").value;
-    const message = document.getElementById("message");
+let selectedAvatar = "👩🏻";
 
-    if (password !== confirmPassword) {
-        message.textContent = "Passwords do not match.";
-        return;
-    }
 
-    message.textContent = "Account creation will connect to the backend later!";
-});
+// ===============================
+// AVATAR SELECTION
+// ===============================
+
+document.querySelectorAll(".signup-avatar-option")
+    .forEach(button => {
+
+        button.addEventListener("click", function() {
+
+            document
+                .querySelectorAll(".signup-avatar-option")
+                .forEach(btn =>
+                    btn.classList.remove("selected")
+                );
+
+            this.classList.add("selected");
+
+            selectedAvatar = this.dataset.avatar;
+        });
+
+    });
+
+
+// ===============================
+// SIGN UP
+// ===============================
+
+document.getElementById("signupForm")
+    .addEventListener("submit", function(event) {
+
+        event.preventDefault();
+
+        const usernameInput = document.getElementById("username");
+        const emailInput = document.getElementById("email");
+        const passwordInput = document.getElementById("password");
+        const confirmPasswordInput =
+            document.getElementById("confirmPassword");
+        const message = document.getElementById("message");
+
+        const username = usernameInput.value.trim();
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+
+        // Clear previous message
+        message.textContent = "";
+        message.style.color = "#b00020";
+
+        // All fields are mandatory
+        if (!username || !email || !password || !confirmPassword) {
+            message.textContent = "Please fill in all fields.";
+            return;
+        }
+
+        // Validate email format
+const emailPattern =
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+if (!emailPattern.test(email)) {
+    message.textContent =
+        "Please enter a valid email address, such as name@gmail.com";
+    emailInput.focus();
+    return;
+}
+
+        // Require at least 8 characters
+        if (password.length < 8) {
+            message.textContent =
+                "Password must contain at least 8 characters.";
+            passwordInput.focus();
+            return;
+        }
+
+        // Confirm password
+        if (password !== confirmPassword) {
+            message.textContent = "Passwords do not match.";
+            confirmPasswordInput.focus();
+            return;
+        }
+        // ===============================
+        // CREATE NEW PROFILE
+        // ===============================
+
+        const profile = {
+            name: username,
+            username: username,
+            email: email,
+            avatar: selectedAvatar
+        };
+
+
+        localStorage.setItem(
+            "cloudpet_profile",
+            JSON.stringify(profile)
+        );
+
+
+        // Automatically log the new user in
+        localStorage.setItem(
+            "cloudpet_logged_in",
+            "true"
+        );
+
+
+        message.textContent =
+            "Account created successfully! 🐾";
+
+
+        // Go directly to Home
+        setTimeout(() => {
+
+            window.location.href =
+                "home.html";
+
+        }, 500);
+
+    });
+
 </script>
 </body>
 </html>

@@ -6,32 +6,285 @@
 <title>Pet Haven</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Arial,sans-serif;min-height:100vh;color:#35104f;background:linear-gradient(135deg,#35104f,#8f5bb3 45%,#f3a6c8);padding-bottom:40px}
-nav{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:22px;padding:14px 5%;background:rgba(53,16,79,.95);color:#fff}
-.logo{font-weight:800;font-size:1.3rem}.links{display:flex;gap:18px;flex:1}.links a{color:#fff;text-decoration:none;font-weight:600}.links a:hover{color:#f3b4d1}
-.right{display:flex;gap:10px;align-items:center}.coins{background:#c8a2e8;color:#35104f;padding:8px 13px;border-radius:20px;font-weight:800}.avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#f3a6c8;font-weight:800}
-main{width:min(1080px,92%);margin:30px auto}.back{color:white;text-decoration:none;font-weight:700;display:inline-block;margin-bottom:18px}
-.grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:22px}.card{background:#c8a2e8;border-radius:24px;padding:26px;box-shadow:0 16px 35px #2d0a4138}
-.visual{height:310px;display:grid;place-items:center;border-radius:22px;background:#ffffff47;overflow:hidden}.visual img{width:75%;height:75%;object-fit:contain;image-rendering:pixelated}
+body {
+  font-family: 'Nunito', 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+  color: #3a1a5c;
+  background: linear-gradient(
+    160deg,
+    #2c1250 0%,
+    #6a2f8f 45%,
+    #d68ecb 100%
+  );
+  background-attachment: fixed;
+  padding-bottom: 40px;
+}
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 32px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: #fff;
+  letter-spacing: 0.2px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 6px;
+  border-radius: 999px;
+}
+
+.nav-links a {
+  padding: 8px 18px;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 700;
+  font-size: 0.92rem;
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.nav-links a:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.nav-links a.active {
+  background: #fff;
+  color: #8c4fd6;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.coin-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 8px 16px;
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff6fa5, #8c4fd6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 800;
+  font-size: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+}
+
+.logout-link {
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+main {
+  width: min(1080px, 92%);
+  margin: 30px auto;
+}
+.back{color:white;text-decoration:none;font-weight:700;display:inline-block;margin-bottom:18px}
+.grid {
+  display: grid;
+  grid-template-columns: .9fr 1.1fr;
+  gap: 22px;
+}
+
+.card {
+  background: #f2e6fb;
+  border-radius: 28px;
+  padding: 26px;
+  box-shadow: 0 12px 28px rgba(44, 18, 80, 0.35);
+}
+.visual {
+  height: 310px;
+  display: grid;
+  place-items: center;
+  border-radius: 22px;
+  background: #ead8f5;
+  overflow: hidden;
+}
+.visual img{width:75%;height:75%;object-fit:contain;image-rendering:pixelated}
 .visual .emoji-fallback{font-size:9rem;line-height:1}
-h1{font-size:2rem;margin-top:12px}.info{color:#4a2460;margin:5px 0}.mood{display:inline-block;background:#fff8;padding:7px 13px;border-radius:20px;margin:8px}
+h1{font-size:2rem;margin-top:12px}
+.info {
+  color: #6b4a8f;
+  margin: 5px 0;
+}
+.mood {
+  display: inline-block;
+  background: #fff;
+  color: #6b4a8f;
+  padding: 7px 13px;
+  border-radius: 999px;
+  margin: 8px;
+  font-weight: 700;
+}
 h2{font-size:1.15rem;margin:20px 0 14px}.trait,.stat{margin:13px 0}.row{display:flex;justify-content:space-between;font-weight:700;font-size:.9rem;margin-bottom:6px}.bar{height:10px;background:#fff8;border-radius:20px;overflow:hidden}.fill{height:100%;background:linear-gradient(90deg,#7a438f,#e987b3);border-radius:20px;transition:.3s}
-.actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}.action{border:0;border-radius:14px;padding:14px;background:#35104f;color:#fff;font-weight:800;font-size:1rem;cursor:pointer}.action:hover{opacity:.9;transform:translateY(-1px)}
-.weather{margin-top:20px;padding:15px;border-radius:16px;background:#fff5;color:#4a2460}.weather strong{color:#35104f}
-.overlay{position:fixed;inset:0;z-index:50;display:none;place-items:center;background:#190725b8;padding:20px}.overlay.show{display:grid}.cleanbox{position:relative;width:min(620px,100%);height:440px;background:#c8a2e8;border-radius:25px;text-align:center;padding:24px;overflow:hidden}.cleanbox p{color:#4a2460;margin-top:5px}.close{position:absolute;right:15px;top:10px;border:0;background:none;font-size:1.7rem;color:#35104f;cursor:pointer}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.action {
+  border: 0;
+  border-radius: 999px;
+  padding: 14px;
+  background: #8c4fd6;
+  color: #fff;
+  font-weight: 800;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.action:hover {
+  background: #ff6fa5;
+  transform: translateY(-1px);
+}
+.weather {
+  margin-top: 20px;
+  padding: 15px;
+  border-radius: 20px;
+  background: #f8effc;
+  color: #6b4a8f;
+}
+
+.weather strong {
+  color: #3a1a5c;
+}
+.overlay{position:fixed;inset:0;z-index:50;display:none;place-items:center;background:#190725b8;padding:20px}.overlay.show{display:grid}.cleanbox{position:relative;width:min(620px,100%);height:440px;background:#c8a2e8;border-radius:25px;text-align:center;padding:24px;overflow:hidden}
+.cleanbox p{color:#4a2460;margin-top:5px}.close{position:absolute;right:15px;top:10px;border:0;background:none;font-size:1.7rem;color:#35104f;cursor:pointer}
 .cleanpet{position:absolute;left:50%;top:53%;transform:translate(-50%,-50%);width:210px;height:210px;border-radius:50%;background:#fff5;display:grid;place-items:center}.cleanpet img{width:82%;height:82%;object-fit:contain;image-rendering:pixelated}.cleanpet .emoji-fallback{font-size:6rem}
 .soap{position:absolute;left:20%;top:67%;width:70px;height:44px;border:0;border-radius:20px;background:linear-gradient(145deg,#fff,#f2b8df);font-size:1.8rem;cursor:grab;touch-action:none;box-shadow:0 8px 18px #35104f40}.bubble{position:absolute;border:3px solid #fffc;border-radius:50%;animation:bubble 1.2s ease-out forwards;pointer-events:none}@keyframes bubble{0%{transform:scale(.3);opacity:0}25%{opacity:1}100%{transform:translate(var(--x),var(--y)) scale(1.2);opacity:0}}
 .toast{position:fixed;bottom:25px;left:50%;transform:translate(-50%,80px);background:#35104f;color:#fff;padding:12px 18px;border-radius:20px;opacity:0;transition:.25s;z-index:100}.toast.show{transform:translate(-50%,0);opacity:1}
 @media(max-width:800px){nav{flex-wrap:wrap}.links{order:3;width:100%;justify-content:center;overflow:auto}.grid{grid-template-columns:1fr}}@media(max-width:480px){main{width:94%}.card{padding:20px}.visual{height:250px}}
+/* FOOD SELECTION */
+
+.foodbox {
+  position: relative;
+  width: min(520px, 90%);
+  background: var(--card, #f2e6fb);
+  border-radius: 28px;
+  padding: 30px;
+  box-shadow: 0 20px 50px rgba(44, 18, 80, 0.45);
+  text-align: center;
+}
+
+.foodbox h2 {
+  margin: 0 0 8px;
+  color: var(--ink, #3a1a5c);
+}
+
+.food-subtitle {
+  color: var(--ink-soft, #6b4a8f);
+  margin-bottom: 22px;
+}
+
+.food-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.food-option {
+  border: none;
+  background: var(--card-soft, #f8effc);
+  border-radius: 18px;
+  padding: 18px 10px;
+  cursor: pointer;
+  color: var(--ink, #3a1a5c);
+  font-weight: 800;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.food-option:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(44, 18, 80, 0.18);
+}
+
+.food-icon {
+  display: block;
+  font-size: 2.2rem;
+  margin-bottom: 8px;
+}
+
+.food-name {
+  display: block;
+  font-size: 1rem;
+  margin-bottom: 5px;
+}
+
+.food-count {
+  display: block;
+  color: var(--ink-soft, #6b4a8f);
+  font-size: 0.85rem;
+}
+
+.no-food-message {
+  color: var(--ink-soft, #6b4a8f);
+  line-height: 1.6;
+  margin: 20px 0;
+}
+
+.shop-food-button {
+  display: inline-block;
+  background: var(--purple, #8c4fd6);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.shop-food-button:hover {
+  background: var(--pink, #ff6fa5);
+}
 </style>
 </head>
 <body>
-<nav>
- <div class="logo">🐾 Pet Haven</div>
- <div class="links"><a href="home.html">Home</a><a href="ai-chat.html">AI Chat</a><a href="shop.html">Shop</a><a href="profile.html">Profile</a></div>
- <div class="right"><span class="coins">🪙 250</span><span class="avatar">L</span></div>
-</nav>
+<nav class="navbar">
 
+  <div class="nav-brand">🐾 Pet Haven</div>
+
+  <div class="nav-links">
+    <a href="home.html">Home</a>
+    <a href="ai-chat.html">AI Chat</a>
+    <a href="shop.html">Shop</a>
+    <a href="coins.html">Coins</a>
+    <a href="profile.html">Profile</a>
+  </div>
+
+  <div class="nav-right">
+    <div class="coin-pill" id="coinDisplay">🪙 0</div>
+    <div class="avatar">L</div>
+    <a href="login.html" class="logout-link">Logout</a>
+  </div>
+
+</nav>
 <main>
 <a class="back" href="home.html">← Back to Home</a>
 <div class="grid">
@@ -47,7 +300,7 @@ h2{font-size:1.15rem;margin:20px 0 14px}.trait,.stat{margin:13px 0}.row{display:
  <div id="stats"></div>
  <h2>What should <span id="actionName"></span> do?</h2>
  <div class="actions">
-  <button class="action" onclick="act('feed')">🍖 Feed</button>
+  <button class="action" onclick="foodStart()">🍖 Feed</button>
   <button class="action" onclick="act('play')">🎾 Play</button>
   <button class="action" onclick="cleanStart()">🧼 Clean</button>
   <button class="action" onclick="act('sleep')">😴 Sleep</button>
@@ -64,6 +317,37 @@ h2{font-size:1.15rem;margin:20px 0 14px}.trait,.stat{margin:13px 0}.row{display:
   <div class="cleanpet" id="cleanpet"></div>
   <button class="soap" id="soap">🧼</button>
  </div>
+</div>
+<!-- FOOD SELECTION -->
+<div class="overlay" id="foodOverlay">
+  <div class="foodbox">
+
+    <button class="close" onclick="foodClose()">×</button>
+
+    <h2>🍽️ Feed <span id="foodPetName"></span></h2>
+
+    <p class="food-subtitle">
+      Choose something from your inventory:
+    </p>
+
+    <div id="foodOptions" class="food-options"></div>
+
+    <p id="noFoodMessage" class="no-food-message" style="display:none;">
+      🍽️ You don't have any food!
+      <br>
+      Visit the Shop to buy some. 🛒
+    </p>
+
+    <a
+      href="shop.html"
+      id="shopFoodButton"
+      class="shop-food-button"
+      style="display:none;"
+    >
+      Go to Shop →
+    </a>
+
+  </div>
 </div>
 <div class="toast" id="toast"></div>
 
@@ -111,7 +395,11 @@ const PETS = {
 const params=new URLSearchParams(window.location.search);
 const id=params.get("id")||"1";
 const pet=PETS[id]||PETS[1];
-const state=Object.assign({},pet.stats);
+const savedState = localStorage.getItem("cloudpet_pet_state_" + id);
+
+const state = savedState
+  ? JSON.parse(savedState)
+  : Object.assign({}, pet.stats);
 
 const effects={
  feed:{hunger:15,happiness:3,msg:pet.feedMsg},
@@ -152,12 +440,241 @@ function render(){
  }
  document.getElementById("mood").textContent=state.happiness>=75?"😊 Happy":state.happiness>=45?"😐 Okay":"🥺 Needs attention";
 }
+function foodStart(){
 
+  document.getElementById("foodPetName").textContent = pet.name;
+
+  renderFoodOptions();
+
+  document.getElementById("foodOverlay").classList.add("show");
+}
+
+function foodClose(){
+
+  document.getElementById("foodOverlay").classList.remove("show");
+}
+function renderFoodOptions(){
+
+  const options = document.getElementById("foodOptions");
+  const noFood = document.getElementById("noFoodMessage");
+  const shopButton = document.getElementById("shopFoodButton");
+
+  options.innerHTML = "";
+
+  const savedInventory =
+    localStorage.getItem("cloudpet_inventory");
+
+  const inventory =
+    savedInventory ? JSON.parse(savedInventory) : [];
+
+  // Food available in the inventory
+  const foods = {};
+
+  inventory.forEach(item => {
+
+    if (
+      item.name === "Apple" ||
+      item.name === "Fish" ||
+      item.name === "Carrot"
+    ) {
+
+      if (!foods[item.name]) {
+        foods[item.name] = {
+          name: item.name,
+          emoji:
+            item.emoji ||
+            (
+                item.name === "Apple" ? "🍎" :
+                item.name === "Fish" ? "🐟" :
+                item.name === "Carrot" ? "🥕" :
+                "🍽️"
+            ),
+          count: 0
+        };
+      }
+
+      foods[item.name].count++;
+    }
+  });
+
+  const foodList = Object.values(foods);
+
+  // No food
+  if (foodList.length === 0) {
+
+    noFood.style.display = "block";
+    shopButton.style.display = "inline-block";
+
+    return;
+  }
+
+  noFood.style.display = "none";
+  shopButton.style.display = "none";
+
+  foodList.forEach(food => {
+
+    const button = document.createElement("button");
+
+    button.className = "food-option";
+
+    button.innerHTML = `
+      <span class="food-icon">${food.emoji}</span>
+      <span class="food-name">${food.name}</span>
+      <span class="food-count">× ${food.count}</span>
+    `;
+
+    button.onclick = () => feedWithFood(food.name);
+
+    options.appendChild(button);
+  });
+}
+function feedWithFood(foodName){
+
+  const savedInventory =
+    localStorage.getItem("cloudpet_inventory");
+
+  let inventory =
+    savedInventory ? JSON.parse(savedInventory) : [];
+
+  const index =
+    inventory.findIndex(item => item.name === foodName);
+
+  if(index === -1){
+
+    toast("🍽️ You don't have that food!");
+
+    renderFoodOptions();
+
+    return;
+  }
+
+  // Remove one food item
+  inventory.splice(index, 1);
+
+  localStorage.setItem(
+    "cloudpet_inventory",
+    JSON.stringify(inventory)
+  );
+
+  // Food effects
+  const foodEffects = {
+
+    Apple: {
+      hunger: 15,
+      happiness: 3
+    },
+
+    Fish: {
+      hunger: 20,
+      happiness: 5
+    },
+
+    Carrot: {
+      hunger: 18,
+      happiness: 4
+    }
+  };
+
+  const effect = foodEffects[foodName];
+
+  // Update pet stats
+  state.hunger =
+    clamp(state.hunger + effect.hunger);
+
+  state.happiness =
+    clamp(state.happiness + effect.happiness);
+
+  localStorage.setItem(
+  "cloudpet_pet_state_" + id,
+  JSON.stringify(state)
+);
+  // Complete Feed daily quest
+  localStorage.setItem(
+    "cloudpet_quest_feed",
+    "true"
+  );
+
+  const today = new Date();
+
+  const todayKey =
+    today.getFullYear() + "-" +
+    String(today.getMonth() + 1).padStart(2, "0") + "-" +
+    String(today.getDate()).padStart(2, "0");
+
+  localStorage.setItem(
+    "cloudpet_quest_date",
+    todayKey
+  );
+
+  // Close popup
+  foodClose();
+
+  // Show feeding animation
+  document.getElementById("visual").innerHTML =
+    visualHTML("feed");
+
+  render();
+
+  toast(
+    `${foodName} served! 🐾 ${pet.name} enjoyed the meal! 💕`
+  );
+
+  setTimeout(() => {
+
+    document.getElementById("visual").innerHTML =
+      visualHTML("idle");
+
+  }, 2500);
+}
 function act(type){
- for(const k in effects[type]) if(k in state) state[k]=clamp(state[k]+effects[type][k]);
- document.getElementById("visual").innerHTML=visualHTML(type);
- render(); toast(effects[type].msg);
- setTimeout(()=>{document.getElementById("visual").innerHTML=visualHTML("idle");},2500);
+
+  // Update pet stats
+  for(const k in effects[type]){
+    if(k in state){
+      state[k]=clamp(state[k]+effects[type][k]);
+    }
+  }
+  localStorage.setItem(
+  "cloudpet_pet_state_" + id,
+  JSON.stringify(state)
+);
+
+  // Record daily quest completion
+  if(type === "feed" || type === "play"){
+    localStorage.setItem("cloudpet_quest_" + type, "true");
+
+    localStorage.setItem(
+      "cloudpet_quest_date",
+      getToday()
+    );
+  }
+
+  // Record pet-specific discovery
+  if(pet.species === "Cat" || pet.species === "Corgi" || pet.species === "Holland Lop Rabbit"){
+
+    if(pet.species === "Cat"){
+      localStorage.setItem("cloudpet_discovery_cat", "true");
+    }
+
+    if(pet.species === "Corgi"){
+      localStorage.setItem("cloudpet_discovery_dog", "true");
+    }
+
+    if(pet.species === "Holland Lop Rabbit"){
+      localStorage.setItem("cloudpet_discovery_rabbit", "true");
+    }
+  }
+
+  // Show pet action
+  document.getElementById("visual").innerHTML=visualHTML(type);
+
+  render();
+  window.dispatchEvent(new Event("cloudpetStateUpdated"));
+  toast(effects[type].msg);
+
+  setTimeout(()=>{
+    document.getElementById("visual").innerHTML=visualHTML("idle");
+  },2500);
 }
 
 function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(window.tt);window.tt=setTimeout(()=>t.classList.remove("show"),2200)}
@@ -176,7 +693,19 @@ function collision(){
  if(cleaned)return;
  const a=soap.getBoundingClientRect(),b=cleanpet.getBoundingClientRect();
  if(a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top){
-  cleaned=true;state.hygiene=clamp(state.hygiene+15);state.happiness=clamp(state.happiness+3);
+  cleaned=true;
+  localStorage.setItem("cloudpet_quest_clean", "true");
+
+  localStorage.setItem(
+  "cloudpet_quest_date",
+  getToday()
+  );
+  state.hygiene=clamp(state.hygiene+15);
+  state.happiness=clamp(state.happiness+3);
+  localStorage.setItem(
+    "cloudpet_pet_state_" + id,
+    JSON.stringify(state)
+  );
   for(let i=0;i<14;i++){
    const q=document.createElement("i");q.className="bubble";
    q.style.width=q.style.height=10+Math.random()*20+"px";
@@ -190,9 +719,21 @@ function collision(){
   setTimeout(()=>{cleanClose();cleaned=false},1300);
  }
 }
+function getToday(){
+  const today = new Date();
 
+  return today.getFullYear() + "-" +
+         String(today.getMonth() + 1).padStart(2, "0") + "-" +
+         String(today.getDate()).padStart(2, "0");
+}
 renderHeader();
 render();
+const coinDisplay = document.getElementById("coinDisplay");
+
+const savedCoins = localStorage.getItem("cloudpet_coins");
+
+coinDisplay.textContent =
+  "🪙 " + (savedCoins === null ? 250 : Number(savedCoins));
 </script>
 </body>
 </html>

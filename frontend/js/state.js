@@ -63,3 +63,24 @@ function addToInventory(item) {
     JSON.stringify(inventory)
   );
 }
+function updateNavbarAvatar() {
+    const savedProfile =
+        localStorage.getItem("cloudpet_profile");
+
+    if (!savedProfile) {
+        return;
+    }
+
+    const profile = JSON.parse(savedProfile);
+
+    const avatar = profile.avatar || "👩🏻";
+
+    document.querySelectorAll(".avatar").forEach(element => {
+        element.textContent = avatar;
+    });
+}
+
+document.addEventListener(
+    "DOMContentLoaded",
+    updateNavbarAvatar
+);

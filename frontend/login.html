@@ -90,11 +90,64 @@ input:focus { border-color: #e6a5d4; box-shadow: 0 0 0 3px rgba(230,165,212,.2);
 </main>
 
 <script>
-document.getElementById("loginForm").addEventListener("submit", function(event) {
+document.getElementById("loginForm")
+  .addEventListener("submit", function(event) {
     event.preventDefault();
-    document.getElementById("message").textContent =
-        "Login will connect to the backend later!";
-});
+
+    const enteredLogin =
+      document.getElementById("email").value.trim();
+
+    const password =
+      document.getElementById("password").value;
+
+    const message =
+      document.getElementById("message");
+
+    message.textContent = "";
+    message.style.color = "#ff6b81";
+
+    // Check that both fields are filled
+    if (!enteredLogin || !password) {
+      message.textContent =
+        "Please enter your email/username and password.";
+      return;
+    }
+
+    const profileData =
+      localStorage.getItem("cloudpet_profile");
+
+    if (!profileData) {
+      message.textContent =
+        "No CloudPet account found. Please sign up first.";
+      return;
+    }
+
+    const profile = JSON.parse(profileData);
+    const enteredValue = enteredLogin.toLowerCase();
+
+    // Check email or username
+    if (
+      enteredValue !== (profile.email || "").toLowerCase() &&
+      enteredValue !==
+        (profile.username || profile.name || "").toLowerCase()
+    ) {
+      message.textContent =
+        "Email or username not found.";
+      return;
+    }
+
+    // Prototype only: password verification will be handled
+    // by Amazon Cognito during AWS integration.
+    localStorage.setItem("cloudpet_logged_in", "true");
+
+    message.style.color = "#8b5cf6";
+    message.textContent =
+      "Welcome back, " + profile.name + "! 🐾";
+
+    setTimeout(() => {
+      window.location.href = "home.html";
+    }, 800);
+  });
 </script>
 </body>
 </html>
