@@ -354,13 +354,14 @@
   <nav class="navbar">
     <div class="nav-brand">🐾 Pet Haven</div>
     <div class="nav-links">
-      <a href="home.html" class="active">Home</a>
-      <a href="ai-chat.html">AI Chat</a>
-      <a href="shop.html">Shop</a>
-      <a href="profile.html">Profile</a>
-    </div>
+    <a href="home.html" class="active">Home</a>
+    <a href="ai-chat.html">AI Chat</a>
+    <a href="shop.html">Shop</a>
+    <a href="coins.html">Coins</a>
+    <a href="profile.html">Profile</a>
+  </div>
     <div class="nav-right">
-      <div class="coin-pill">🪙 250</div>
+      <div class="coin-pill" id="homeCoins">🪙 250</div>
       <div class="avatar">L</div>
       <a href="login.html" class="logout-link">Logout</a>
     </div>
@@ -385,14 +386,22 @@
       </div>
 
       <div class="card quest-card">
-        <div class="quest-header">
-          <div class="quest-coins">🪙 250 Coins</div>
-        </div>
-        <div class="quest-title">Today's Quest</div>
-        <div class="quest-desc">Feed 2 pets · Progress: 1 / 2</div>
-        <div class="progress-track"><div class="progress-fill"></div></div>
-        <a href="quests.html" class="quest-btn">View Quests</a>
-      </div>
+  <div class="quest-header">
+    <div class="quest-coins">🪙 Daily Coins</div>
+  </div>
+
+  <div class="quest-title">Today's Quests</div>
+
+  <div class="quest-desc" id="homeQuestProgress">
+    Complete your pet activities to earn coins!
+  </div>
+
+  <div class="progress-track">
+    <div class="progress-fill" id="homeQuestProgressBar"></div>
+  </div>
+
+  <a href="coins.html" class="quest-btn">View Coins →</a>
+</div>
     </div>
 
     <h2 class="section-title">My Pets 🐾</h2>
@@ -402,7 +411,10 @@
         <div class="pet-avatar">🐱</div>
         <div class="pet-name">Luna</div>
         <div class="pet-breed">Persian Cat</div>
-        <div class="pet-stats"><span>❤️ 85</span><span>🍖 72</span></div>
+        <div class="pet-stats">
+          <span id="pet1Health">❤️ 85</span>
+          <span id="pet1Hunger">🍖 72</span>
+        </div>
         <span class="view-pet">View Pet →</span>
       </a>
 
@@ -410,7 +422,10 @@
         <div class="pet-avatar">🐶</div>
         <div class="pet-name">Biscuit</div>
         <div class="pet-breed">Corgi</div>
-        <div class="pet-stats"><span>❤️ 95</span><span>🍖 60</span></div>
+        <div class="pet-stats">
+          <span id="pet2Health">❤️ 95</span>
+          <span id="pet2Hunger">🍖 60</span>
+        </div>
         <span class="view-pet">View Pet →</span>
       </a>
 
@@ -418,7 +433,10 @@
         <div class="pet-avatar">🐰</div>
         <div class="pet-name">Clover</div>
         <div class="pet-breed">Holland Lop</div>
-        <div class="pet-stats"><span>❤️ 72</span><span>🍖 88</span></div>
+        <div class="pet-stats">
+          <span id="pet3Health">❤️ 72</span>
+          <span id="pet3Hunger">🍖 88</span>
+        </div>
         <span class="view-pet">View Pet →</span>
       </a>
 
@@ -426,7 +444,10 @@
         <div class="pet-avatar">🦊</div>
         <div class="pet-name">Ember</div>
         <div class="pet-breed">Fennec Fox</div>
-        <div class="pet-stats"><span>❤️ 64</span><span>🍖 55</span></div>
+        <div class="pet-stats">
+          <span id="pet4Health">❤️ 64</span>
+          <span id="pet4Hunger">🍖 55</span>
+        </div>
         <span class="view-pet">View Pet →</span>
       </a>
 
@@ -434,7 +455,10 @@
         <div class="pet-avatar">🐹</div>
         <div class="pet-name">Waffle</div>
         <div class="pet-breed">Hamster</div>
-        <div class="pet-stats"><span>❤️ 91</span><span>🍖 80</span></div>
+        <div class="pet-stats">
+          <span id="pet5Health">❤️ 91</span>
+          <span id="pet5Hunger">🍖 80</span>
+        </div>
         <span class="view-pet">View Pet →</span>
       </a>
 
@@ -442,12 +466,76 @@
         <div class="pet-avatar">🐢</div>
         <div class="pet-name">Shelly</div>
         <div class="pet-breed">Box Turtle</div>
-        <div class="pet-stats"><span>❤️ 78</span><span>🍖 90</span></div>
+        <div class="pet-stats">
+          <span id="pet6Health">❤️ 78</span>
+          <span id="pet6Hunger">🍖 90</span>
+        </div>
         <span class="view-pet">View Pet →</span>
       </a>
 
     </div>
   </main>
+<script src="js/state.js"></script>
 
+<script>
+  document.getElementById("homeCoins").textContent =
+    "🪙 " + getCoins();
+  function updateHomeQuest() {
+
+  const today = new Date();
+
+  const todayKey =
+    today.getFullYear() + "-" +
+    String(today.getMonth() + 1).padStart(2, "0") + "-" +
+    String(today.getDate()).padStart(2, "0");
+
+  const questDate = localStorage.getItem("cloudpet_quest_date");
+
+  let completed = 0;
+
+  if (questDate === todayKey) {
+
+    if (localStorage.getItem("cloudpet_quest_feed") === "true") {
+      completed++;
+    }
+
+    if (localStorage.getItem("cloudpet_quest_play") === "true") {
+      completed++;
+    }
+
+    if (localStorage.getItem("cloudpet_quest_clean") === "true") {
+      completed++;
+    }
+  }
+
+  document.getElementById("homeQuestProgress").textContent =
+    completed + " / 3 daily quests completed";
+
+  document.getElementById("homeQuestProgressBar").style.width =
+    (completed / 3 * 100) + "%";
+}
+
+updateHomeQuest();
+function updatePetCards() {
+
+  for (let id = 1; id <= 6; id++) {
+
+    const savedState =
+      localStorage.getItem("cloudpet_pet_state_" + id);
+
+    if (!savedState) continue;
+
+    const state = JSON.parse(savedState);
+
+    document.getElementById("pet" + id + "Health").textContent =
+      "❤️ " + Math.round(state.health);
+
+    document.getElementById("pet" + id + "Hunger").textContent =
+      "🍖 " + Math.round(state.hunger);
+  }
+}
+
+updatePetCards();
+</script>
 </body>
 </html>
