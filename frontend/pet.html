@@ -5,20 +5,27 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Pet Haven</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
+:root {
+  --ink: #3a1a5c;
+  --ink-soft: #6b4a8f;
+  --card: #f2e6fb;
+  --card-soft: #f8effc;
+  --purple: #8c4fd6;
+  --pink: #ff6fa5;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
 body {
   font-family: 'Nunito', 'Segoe UI', system-ui, sans-serif;
   min-height: 100vh;
-  color: #3a1a5c;
-  background: linear-gradient(
-    160deg,
-    #2c1250 0%,
-    #6a2f8f 45%,
-    #d68ecb 100%
-  );
+  color: var(--ink);
+  background: linear-gradient(160deg, #2c1250 0%, #6a2f8f 45%, #d68ecb 100%);
   background-attachment: fixed;
   padding-bottom: 40px;
 }
+
+/* ---------- Navbar ---------- */
 .navbar {
   display: flex;
   align-items: center;
@@ -31,7 +38,6 @@ body {
   top: 0;
   z-index: 20;
 }
-
 .nav-brand {
   display: flex;
   align-items: center;
@@ -39,9 +45,7 @@ body {
   font-weight: 800;
   font-size: 1.2rem;
   color: #fff;
-  letter-spacing: 0.2px;
 }
-
 .nav-links {
   display: flex;
   gap: 6px;
@@ -49,7 +53,6 @@ body {
   padding: 6px;
   border-radius: 999px;
 }
-
 .nav-links a {
   padding: 8px 18px;
   border-radius: 999px;
@@ -59,26 +62,10 @@ body {
   text-decoration: none;
   transition: background 0.2s ease, color 0.2s ease;
 }
-
-.nav-links a:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.nav-links a.active {
-  background: #fff;
-  color: #8c4fd6;
-}
-
-.nav-right {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
+.nav-links a:hover { background: rgba(255, 255, 255, 0.15); }
+.nav-links a.active { background: #fff; color: var(--purple); }
+.nav-right { display: flex; align-items: center; gap: 14px; }
 .coin-pill {
-  display: flex;
-  align-items: center;
-  gap: 6px;
   background: rgba(255, 255, 255, 0.15);
   padding: 8px 16px;
   border-radius: 999px;
@@ -86,39 +73,37 @@ body {
   font-weight: 800;
   font-size: 0.9rem;
 }
-
 .avatar {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ff6fa5, #8c4fd6);
+  background: linear-gradient(135deg, var(--pink), var(--purple));
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
   font-weight: 800;
-  font-size: 1rem;
   border: 2px solid rgba(255, 255, 255, 0.6);
 }
-
 .logout-link {
   color: rgba(255, 255, 255, 0.75);
   font-weight: 700;
   font-size: 0.85rem;
-}
-main {
-  width: min(1080px, 92%);
-  margin: 30px auto;
-}
-.back{color:white;text-decoration:none;font-weight:700;display:inline-block;margin-bottom:18px}
-.grid {
-  display: grid;
-  grid-template-columns: .9fr 1.1fr;
-  gap: 22px;
+  text-decoration: none;
 }
 
+/* ---------- Layout ---------- */
+main { width: min(1080px, 92%); margin: 30px auto; }
+.back {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 700;
+  display: inline-block;
+  margin-bottom: 18px;
+}
+.grid { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 22px; }
 .card {
-  background: #f2e6fb;
+  background: var(--card);
   border-radius: 28px;
   padding: 26px;
   box-shadow: 0 12px 28px rgba(44, 18, 80, 0.35);
@@ -131,609 +116,791 @@ main {
   background: #ead8f5;
   overflow: hidden;
 }
-.visual img{width:75%;height:75%;object-fit:contain;image-rendering:pixelated}
-.visual .emoji-fallback{font-size:9rem;line-height:1}
-h1{font-size:2rem;margin-top:12px}
-.info {
-  color: #6b4a8f;
-  margin: 5px 0;
-}
+.visual img { width: 75%; height: 75%; object-fit: contain; image-rendering: pixelated; }
+.emoji-fallback { font-size: 9rem; line-height: 1; }
+h1 { font-size: 2rem; margin-top: 12px; }
+h2 { font-size: 1.15rem; margin: 20px 0 14px; }
+.card > h2:first-child { margin-top: 0; }
+.info { color: var(--ink-soft); margin: 5px 0; }
 .mood {
   display: inline-block;
   background: #fff;
-  color: #6b4a8f;
+  color: var(--ink-soft);
   padding: 7px 13px;
   border-radius: 999px;
-  margin: 8px;
+  margin: 8px 0;
   font-weight: 700;
 }
-h2{font-size:1.15rem;margin:20px 0 14px}.trait,.stat{margin:13px 0}.row{display:flex;justify-content:space-between;font-weight:700;font-size:.9rem;margin-bottom:6px}.bar{height:10px;background:#fff8;border-radius:20px;overflow:hidden}.fill{height:100%;background:linear-gradient(90deg,#7a438f,#e987b3);border-radius:20px;transition:.3s}
-.actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* ---------- Bars ---------- */
+.trait, .stat { margin: 13px 0; }
+.row { display: flex; justify-content: space-between; font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; }
+.bar { height: 10px; background: rgba(255, 255, 255, 0.55); border-radius: 20px; overflow: hidden; }
+.fill { height: 100%; background: linear-gradient(90deg, #7a438f, #e987b3); border-radius: 20px; transition: width 0.3s; }
+
+/* ---------- Actions ---------- */
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .action {
   border: 0;
   border-radius: 999px;
   padding: 14px;
-  background: #8c4fd6;
+  background: var(--purple);
   color: #fff;
   font-weight: 800;
   font-size: 1rem;
   cursor: pointer;
   transition: background 0.2s ease, transform 0.2s ease;
 }
+.action:hover { background: var(--pink); transform: translateY(-1px); }
+.weather { margin-top: 20px; padding: 15px; border-radius: 20px; background: var(--card-soft); color: var(--ink-soft); }
+.weather strong { color: var(--ink); }
 
-.action:hover {
-  background: #ff6fa5;
-  transform: translateY(-1px);
+/* ---------- Overlays ---------- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: none;
+  place-items: center;
+  background: rgba(25, 7, 37, 0.72);
+  padding: 20px;
 }
-.weather {
-  margin-top: 20px;
-  padding: 15px;
+.overlay.show { display: grid; }
+.close {
+  position: absolute;
+  right: 15px;
+  top: 10px;
+  border: 0;
+  background: none;
+  font-size: 1.7rem;
+  color: #35104f;
+  cursor: pointer;
+}
+
+/* Clean mini-game */
+.cleanbox {
+  position: relative;
+  width: min(620px, 100%);
+  height: 440px;
+  background: #c8a2e8;
+  border-radius: 25px;
+  text-align: center;
+  padding: 24px;
+  overflow: hidden;
+}
+.cleanbox p { color: #4a2460; margin-top: 5px; }
+.cleanpet {
+  position: absolute;
+  left: 50%;
+  top: 53%;
+  transform: translate(-50%, -50%);
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.33);
+  display: grid;
+  place-items: center;
+}
+.cleanpet img { width: 82%; height: 82%; object-fit: contain; image-rendering: pixelated; }
+.cleanpet .emoji-fallback { font-size: 6rem; }
+.soap {
+  position: absolute;
+  left: 20%;
+  top: 67%;
+  width: 70px;
+  height: 44px;
+  border: 0;
   border-radius: 20px;
-  background: #f8effc;
-  color: #6b4a8f;
+  background: linear-gradient(145deg, #fff, #f2b8df);
+  font-size: 1.8rem;
+  cursor: grab;
+  touch-action: none;
+  box-shadow: 0 8px 18px rgba(53, 16, 79, 0.25);
+}
+.bubble {
+  position: absolute;
+  border: 3px solid rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  animation: bubble 1.2s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes bubble {
+  0%   { transform: scale(0.3); opacity: 0; }
+  25%  { opacity: 1; }
+  100% { transform: translate(var(--x), var(--y)) scale(1.2); opacity: 0; }
 }
 
-.weather strong {
-  color: #3a1a5c;
-}
-.overlay{position:fixed;inset:0;z-index:50;display:none;place-items:center;background:#190725b8;padding:20px}.overlay.show{display:grid}.cleanbox{position:relative;width:min(620px,100%);height:440px;background:#c8a2e8;border-radius:25px;text-align:center;padding:24px;overflow:hidden}
-.cleanbox p{color:#4a2460;margin-top:5px}.close{position:absolute;right:15px;top:10px;border:0;background:none;font-size:1.7rem;color:#35104f;cursor:pointer}
-.cleanpet{position:absolute;left:50%;top:53%;transform:translate(-50%,-50%);width:210px;height:210px;border-radius:50%;background:#fff5;display:grid;place-items:center}.cleanpet img{width:82%;height:82%;object-fit:contain;image-rendering:pixelated}.cleanpet .emoji-fallback{font-size:6rem}
-.soap{position:absolute;left:20%;top:67%;width:70px;height:44px;border:0;border-radius:20px;background:linear-gradient(145deg,#fff,#f2b8df);font-size:1.8rem;cursor:grab;touch-action:none;box-shadow:0 8px 18px #35104f40}.bubble{position:absolute;border:3px solid #fffc;border-radius:50%;animation:bubble 1.2s ease-out forwards;pointer-events:none}@keyframes bubble{0%{transform:scale(.3);opacity:0}25%{opacity:1}100%{transform:translate(var(--x),var(--y)) scale(1.2);opacity:0}}
-.toast{position:fixed;bottom:25px;left:50%;transform:translate(-50%,80px);background:#35104f;color:#fff;padding:12px 18px;border-radius:20px;opacity:0;transition:.25s;z-index:100}.toast.show{transform:translate(-50%,0);opacity:1}
-@media(max-width:800px){nav{flex-wrap:wrap}.links{order:3;width:100%;justify-content:center;overflow:auto}.grid{grid-template-columns:1fr}}@media(max-width:480px){main{width:94%}.card{padding:20px}.visual{height:250px}}
-/* FOOD SELECTION */
-
+/* Food picker */
 .foodbox {
   position: relative;
   width: min(520px, 90%);
-  background: var(--card, #f2e6fb);
+  background: var(--card);
   border-radius: 28px;
   padding: 30px;
   box-shadow: 0 20px 50px rgba(44, 18, 80, 0.45);
   text-align: center;
 }
-
-.foodbox h2 {
-  margin: 0 0 8px;
-  color: var(--ink, #3a1a5c);
-}
-
-.food-subtitle {
-  color: var(--ink-soft, #6b4a8f);
-  margin-bottom: 22px;
-}
-
-.food-options {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-}
-
+.foodbox h2 { margin: 0 0 8px; }
+.food-subtitle { color: var(--ink-soft); margin-bottom: 22px; }
+.food-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .food-option {
   border: none;
-  background: var(--card-soft, #f8effc);
+  background: var(--card-soft);
   border-radius: 18px;
   padding: 18px 10px;
   cursor: pointer;
-  color: var(--ink, #3a1a5c);
+  color: var(--ink);
   font-weight: 800;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
-
-.food-option:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(44, 18, 80, 0.18);
-}
-
-.food-icon {
-  display: block;
-  font-size: 2.2rem;
-  margin-bottom: 8px;
-}
-
-.food-name {
-  display: block;
-  font-size: 1rem;
-  margin-bottom: 5px;
-}
-
-.food-count {
-  display: block;
-  color: var(--ink-soft, #6b4a8f);
-  font-size: 0.85rem;
-}
-
-.no-food-message {
-  color: var(--ink-soft, #6b4a8f);
-  line-height: 1.6;
-  margin: 20px 0;
-}
-
+.food-option:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(44, 18, 80, 0.18); }
+.food-icon { display: block; font-size: 2.2rem; margin-bottom: 8px; }
+.food-name { display: block; margin-bottom: 5px; }
+.food-count { display: block; color: var(--ink-soft); font-size: 0.85rem; }
+.no-food-message { color: var(--ink-soft); line-height: 1.6; margin: 20px 0; }
 .shop-food-button {
   display: inline-block;
-  background: var(--purple, #8c4fd6);
-  color: white;
+  background: var(--purple);
+  color: #fff;
   padding: 10px 20px;
   border-radius: 999px;
   font-weight: 800;
   text-decoration: none;
 }
+.shop-food-button:hover { background: var(--pink); }
 
-.shop-food-button:hover {
-  background: var(--pink, #ff6fa5);
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 25px;
+  left: 50%;
+  transform: translate(-50%, 80px);
+  background: #35104f;
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 20px;
+  opacity: 0;
+  transition: 0.25s;
+  z-index: 100;
+}
+.toast.show { transform: translate(-50%, 0); opacity: 1; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 800px) {
+  .navbar { flex-wrap: wrap; gap: 10px; padding: 14px 18px; }
+  .nav-links { order: 3; width: 100%; justify-content: center; overflow-x: auto; }
+  .grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  main { width: 94%; }
+  .card { padding: 20px; }
+  .visual { height: 250px; }
+  .food-options { grid-template-columns: repeat(2, 1fr); }
 }
 </style>
 </head>
 <body>
+
 <nav class="navbar">
-
   <div class="nav-brand">🐾 Pet Haven</div>
-
   <div class="nav-links">
-    <a href="home.html">Home</a>
+    <a href="home.html" class="active">Home</a>
     <a href="ai-chat.html">AI Chat</a>
     <a href="shop.html">Shop</a>
     <a href="coins.html">Coins</a>
     <a href="profile.html">Profile</a>
   </div>
-
   <div class="nav-right">
     <div class="coin-pill" id="coinDisplay">🪙 0</div>
     <div class="avatar">L</div>
     <a href="login.html" class="logout-link">Logout</a>
   </div>
-
 </nav>
-<main>
-<a class="back" href="home.html">← Back to Home</a>
-<div class="grid">
-<section class="card">
- <div class="visual" id="visual"></div>
- <h1 id="petName"></h1><p class="info" id="petInfo"></p><span class="mood" id="mood">😊 Happy</span>
- <h2>Personality</h2>
- <div id="traits"></div>
-</section>
 
-<section class="card">
- <h2 style="margin-top:0"><span id="statsHeading"></span> Stats</h2>
- <div id="stats"></div>
- <h2>What should <span id="actionName"></span> do?</h2>
- <div class="actions">
-  <button class="action" onclick="foodStart()">🍖 Feed</button>
-  <button class="action" onclick="act('play')">🎾 Play</button>
-  <button class="action" onclick="cleanStart()">🧼 Clean</button>
-  <button class="action" onclick="act('sleep')">😴 Sleep</button>
- </div>
- <div class="weather"><strong>☀️ Sunny • 28°C</strong><br><span id="weatherMsg"></span><br><strong>Happiness +5 • Energy +3</strong></div>
-</section>
-</div>
+<main>
+  <a class="back" href="home.html">← Back to Home</a>
+
+  <div class="grid">
+    <section class="card">
+      <div class="visual" id="visual"></div>
+      <h1 id="petName"></h1>
+      <p class="info" id="petInfo"></p>
+      <span class="mood" id="mood">😊 Happy</span>
+      <h2>Personality</h2>
+      <div id="traits"></div>
+    </section>
+
+    <section class="card">
+      <h2><span id="statsHeading"></span> Stats</h2>
+      <div id="stats"></div>
+
+      <h2>What should <span id="actionName"></span> do?</h2>
+      <div class="actions">
+        <button class="action" data-action="feed">🍖 Feed</button>
+        <button class="action" data-action="play">🎾 Play</button>
+        <button class="action" data-action="clean">🧼 Clean</button>
+        <button class="action" data-action="sleep">😴 Sleep</button>
+      </div>
+
+      <div class="weather">
+        <strong>☀️ Sunny • 28°C</strong><br>
+        <span id="weatherMsg"></span><br>
+        <strong>Happiness +5 • Energy +3</strong>
+      </div>
+    </section>
+  </div>
 </main>
 
-<div class="overlay" id="overlay">
- <div class="cleanbox" id="cleanbox">
-  <button class="close" onclick="cleanClose()">×</button>
-  <h2>🧼 Clean <span id="cleanName"></span>!</h2><p>Drag the soap onto <span id="cleanName2"></span> to wash them.</p>
-  <div class="cleanpet" id="cleanpet"></div>
-  <button class="soap" id="soap">🧼</button>
- </div>
-</div>
-<!-- FOOD SELECTION -->
-<div class="overlay" id="foodOverlay">
-  <div class="foodbox">
-
-    <button class="close" onclick="foodClose()">×</button>
-
-    <h2>🍽️ Feed <span id="foodPetName"></span></h2>
-
-    <p class="food-subtitle">
-      Choose something from your inventory:
-    </p>
-
-    <div id="foodOptions" class="food-options"></div>
-
-    <p id="noFoodMessage" class="no-food-message" style="display:none;">
-      🍽️ You don't have any food!
-      <br>
-      Visit the Shop to buy some. 🛒
-    </p>
-
-    <a
-      href="shop.html"
-      id="shopFoodButton"
-      class="shop-food-button"
-      style="display:none;"
-    >
-      Go to Shop →
-    </a>
-
+<!-- Clean mini-game -->
+<div class="overlay" id="cleanOverlay">
+  <div class="cleanbox" id="cleanbox">
+    <button class="close" data-close="cleanOverlay" aria-label="Close">×</button>
+    <h2>🧼 Clean <span id="cleanName"></span>!</h2>
+    <p>Drag the soap onto <span id="cleanName2"></span> to wash them.</p>
+    <div class="cleanpet" id="cleanpet"></div>
+    <button class="soap" id="soap" aria-label="Soap">🧼</button>
   </div>
 </div>
-<div class="toast" id="toast"></div>
+
+<!-- Food picker -->
+<div class="overlay" id="foodOverlay">
+  <div class="foodbox">
+    <button class="close" data-close="foodOverlay" aria-label="Close">×</button>
+    <h2>🍽️ Feed <span id="foodPetName"></span></h2>
+    <p class="food-subtitle">Choose something from your inventory:</p>
+    <div id="foodOptions" class="food-options"></div>
+    <p id="noFoodMessage" class="no-food-message" hidden>
+      🍽️ You don't have any food!<br>Visit the Shop to buy some. 🛒
+    </p>
+    <a href="shop.html" id="shopFoodButton" class="shop-food-button" hidden>Go to Shop →</a>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
 
 <script>
-/* ---------- Pet data: one entry per home.html card id ---------- */
+/* =====================================================
+   Config
+   ===================================================== */
+const ANIM_RETURN_MS = 2500;
+const DEFAULT_COINS = 250;
+const GO_TO_BED_MS = 2600;   // go-to-bed.gif plays 10 frames x 260ms
+const BLINK_MS = 1060;       // blink.gif's real animation is 1080ms; its last frame is empty, so leave early
+
+const BUNNY = "../animation_packs/32PixelBunny/32PixelBunny/GIF/";
+
+/* One entry per home.html card id */
 const PETS = {
- 1: { name:"Luna",   species:"Cat",         age:"3 years old", emoji:"🐱",
-      traits:{"❤️ Affection":85,"🎾 Playfulness":60,"😼 Independence":90},
-      stats:{health:85,hunger:72,happiness:80,energy:65,hygiene:75},
-      feedMsg:"🐟 Luna enjoyed the treat!", playMsg:"🧶 Luna chased the yarn!", sleepMsg:"😴 Luna curled up for a nap!",
-      anim:null },
- 2: { name:"Biscuit", species:"Corgi",      age:"1 year old", emoji:"🐶",
-      traits:{"❤️ Affection":95,"🎾 Playfulness":95,"😼 Independence":40},
-      stats:{health:95,hunger:60,happiness:90,energy:80,hygiene:70},
-      feedMsg:"🦴 Biscuit gobbled it up!", playMsg:"🥎 Biscuit fetched the ball!", sleepMsg:"😴 Biscuit is snoozing!",
-      anim:null },
- 3: { name:"Clover", species:"Holland Lop Rabbit", age:"2 years old", emoji:"🐰",
-      traits:{"❤️ Affection":80,"🎾 Playfulness":90,"😼 Independence":55},
-      stats:{health:85,hunger:70,happiness:90,energy:75,hygiene:80},
-      feedMsg:"🥕 Clover enjoyed the carrot!", playMsg:"🎾 Clover had fun!", sleepMsg:"😴 Clover had a nice nap!",
-      anim:{
-        idle:"../animation_packs/32PixelBunny/32PixelBunny/GIF/BunnyIdle.gif",
-        feed:"../animation_packs/32PixelBunny/32PixelBunny/GIF/BunnyCarrotSkill.gif",
-        play:"../animation_packs/32PixelBunny/32PixelBunny/GIF/BunnyJump.gif",
-        sleep:"../animation_packs/32PixelBunny/32PixelBunny/GIF/BunnySleep.gif",
-        sitting:"../animation_packs/32PixelBunny/32PixelBunny/GIF/BunnySitting.gif"
-      }},
- 4: { name:"Ember",  species:"Fennec Fox",  age:"1 year old", emoji:"🦊",
-      traits:{"❤️ Affection":60,"🎾 Playfulness":80,"😼 Independence":85},
-      stats:{health:64,hunger:55,happiness:70,energy:60,hygiene:65},
-      feedMsg:"🍗 Ember snapped it up!", playMsg:"🏃 Ember zoomed around!", sleepMsg:"😴 Ember dozed off!",
-      anim:null },
- 5: { name:"Waffle", species:"Hamster",     age:"8 months old", emoji:"🐹",
-      traits:{"❤️ Affection":70,"🎾 Playfulness":85,"😼 Independence":50},
-      stats:{health:91,hunger:80,happiness:88,energy:70,hygiene:85},
-      feedMsg:"🌻 Waffle stuffed its cheeks!", playMsg:"🎡 Waffle ran on the wheel!", sleepMsg:"😴 Waffle burrowed in for a nap!",
-      anim:null },
- 6: { name:"Shelly", species:"Box Turtle",  age:"5 years old", emoji:"🐢",
-      traits:{"❤️ Affection":50,"🎾 Playfulness":40,"😼 Independence":95},
-      stats:{health:78,hunger:90,happiness:75,energy:50,hygiene:80},
-      feedMsg:"🥬 Shelly munched the greens!", playMsg:"🐢 Shelly explored slowly!", sleepMsg:"😴 Shelly tucked into its shell!",
-      anim:null },
+  1: {
+    name: "Luna", species: "Cat", discovery: "cat", age: "3 years old", emoji: "🐱",
+    traits: { "❤️ Affection": 85, "🎾 Playfulness": 60, "😼 Independence": 90 },
+    stats: { health: 85, hunger: 72, happiness: 80, energy: 65, hygiene: 75 },
+    msgs: { feed: "🐟 Luna enjoyed the treat!", play: "🧶 Luna chased the yarn!", sleep: "😴 Luna curled up for a nap!" },
+    anim: null
+  },
+  2: {
+    name: "Shadow", species: "German Shepherd", discovery: "dog", age: "1 year old", emoji: "🐕",
+    traits: { "❤️ Affection": 90, "🎾 Playfulness": 85, "🛡️ Loyalty": 98 },
+    stats: { health: 95, hunger: 60, happiness: 90, energy: 80, hygiene: 70 },
+    msgs: { feed: "🦴 Shadow enjoyed his meal!", play: "🎾 Shadow ran around excitedly!", sleep: "😴 Shadow curled up for a nap!" },
+    anim: {
+      idle: "assets/dog/idle.gif",
+      blink: "assets/dog/blink.gif",
+      feed: "assets/dog/sniff.gif",
+      play: "assets/dog/running.gif",
+      jump: "assets/dog/jump-full.gif",      // 14 frames x 140ms = 1960ms
+      goToBed: "assets/dog/go-to-bed.gif",   // plays once before the sleep loop
+      sleep: "assets/dog/sleep.gif",
+      sitting: "assets/dog/idle.gif"
+    },
+    /* idle.gif's tail-lift ends at 1080ms; the last 540ms frame is empty, so restart before it */
+    animLoopMs: { idle: 1060, sitting: 1060 },
+    /* Play = run, jump, run. Each step is [animation, milliseconds]:
+       running.gif loops every 560ms, jump-full.gif lasts 1960ms. */
+    sequences: {
+      play: [["play", 1120], ["jump", 1960], ["play", 1120]]
+    }
+  },
+  3: {
+    name: "Clover", species: "Holland Lop Rabbit", discovery: "rabbit", age: "2 years old", emoji: "🐰",
+    traits: { "❤️ Affection": 80, "🎾 Playfulness": 90, "😼 Independence": 55 },
+    stats: { health: 85, hunger: 70, happiness: 90, energy: 75, hygiene: 80 },
+    msgs: { feed: "🥕 Clover enjoyed the carrot!", play: "🎾 Clover had fun!", sleep: "😴 Clover had a nice nap!" },
+    anim: {
+      idle: BUNNY + "BunnyIdle.gif",
+      feed: BUNNY + "BunnyCarrotSkill.gif",
+      play: BUNNY + "BunnyJump.gif",
+      sleep: BUNNY + "BunnySleep.gif",
+      sitting: BUNNY + "BunnySitting.gif"
+    }
+  },
+  4: {
+    name: "Ember", species: "Fennec Fox", age: "1 year old", emoji: "🦊",
+    traits: { "❤️ Affection": 60, "🎾 Playfulness": 80, "😼 Independence": 85 },
+    stats: { health: 64, hunger: 55, happiness: 70, energy: 60, hygiene: 65 },
+    msgs: { feed: "🍗 Ember snapped it up!", play: "🏃 Ember zoomed around!", sleep: "😴 Ember dozed off!" },
+    anim: null
+  },
+  5: {
+    name: "Waffle", species: "Hamster", age: "8 months old", emoji: "🐹",
+    traits: { "❤️ Affection": 70, "🎾 Playfulness": 85, "😼 Independence": 50 },
+    stats: { health: 91, hunger: 80, happiness: 88, energy: 70, hygiene: 85 },
+    msgs: { feed: "🌻 Waffle stuffed its cheeks!", play: "🎡 Waffle ran on the wheel!", sleep: "😴 Waffle burrowed in for a nap!" },
+    anim: null
+  },
+  6: {
+    name: "Shelly", species: "Box Turtle", age: "5 years old", emoji: "🐢",
+    traits: { "❤️ Affection": 50, "🎾 Playfulness": 40, "😼 Independence": 95 },
+    stats: { health: 78, hunger: 90, happiness: 75, energy: 50, hygiene: 80 },
+    msgs: { feed: "🥬 Shelly munched the greens!", play: "🐢 Shelly explored slowly!", sleep: "😴 Shelly tucked into its shell!" },
+    anim: null
+  }
 };
 
-const params=new URLSearchParams(window.location.search);
-const id=params.get("id")||"1";
-const pet=PETS[id]||PETS[1];
-const savedState = localStorage.getItem("cloudpet_pet_state_" + id);
-
-const state = savedState
-  ? JSON.parse(savedState)
-  : Object.assign({}, pet.stats);
-
-const effects={
- feed:{hunger:15,happiness:3,msg:pet.feedMsg},
- play:{happiness:10,energy:-10,hunger:-5,msg:pet.playMsg},
- sleep:{energy:20,hunger:-5,msg:pet.sleepMsg}
+/* Stat changes for each action (feed is food-based, clean is the mini-game) */
+const EFFECTS = {
+  play:  { happiness: 10, energy: -10, hunger: -5 },
+  sleep: { energy: 20, hunger: -5 }
 };
 
-function clamp(x){return Math.max(0,Math.min(100,x))}
+const FOODS = {
+  Apple:  { emoji: "🍎", hunger: 15, happiness: 3 },
+  Fish:   { emoji: "🐟", hunger: 20, happiness: 5 },
+  Carrot: { emoji: "🥕", hunger: 18, happiness: 4 }
+};
 
-function visualHTML(kind){
- if(pet.anim && pet.anim[kind]) return `<img id="petImg" src="${pet.anim[kind]}" alt="${pet.name}">`;
- return `<div class="emoji-fallback" id="petImg">${pet.emoji}</div>`;
-}
+const STAT_ICONS = { health: "❤️", hunger: "🍖", happiness: "😊", energy: "⚡", hygiene: "🧼" };
 
-function renderHeader(){
- document.title=`Pet Haven - ${pet.name}`;
- document.getElementById("petName").textContent=pet.name;
- document.getElementById("petInfo").textContent=`${pet.species} • ${pet.age}`;
- document.getElementById("statsHeading").textContent=`${pet.emoji} ${pet.name}'s`;
- document.getElementById("actionName").textContent=pet.name;
- document.getElementById("cleanName").textContent=pet.name;
- document.getElementById("cleanName2").textContent=pet.name;
- document.getElementById("weatherMsg").textContent=`${pet.name} is enjoying the sunny weather!`;
- document.getElementById("visual").innerHTML=visualHTML("idle");
- const traitsEl=document.getElementById("traits");
- traitsEl.innerHTML="";
- for(const [label,val] of Object.entries(pet.traits)){
-   traitsEl.innerHTML+=`<div class="trait"><div class="row"><span>${label}</span><span>${val}%</span></div><div class="bar"><div class="fill" style="width:${val}%"></div></div></div>`;
- }
-}
+/* =====================================================
+   Helpers
+   ===================================================== */
+const $ = id => document.getElementById(id);
+const clamp = x => Math.max(0, Math.min(100, x));
 
-function render(){
- const s=document.getElementById("stats");
- s.innerHTML="";
- const icons={health:"❤️",hunger:"🍖",happiness:"😊",energy:"⚡",hygiene:"🧼"};
- for(const k in state){
-  s.innerHTML+=`<div class="stat"><div class="row"><span>${icons[k]} ${k[0].toUpperCase()+k.slice(1)}</span><span>${Math.round(state[k])}</span></div><div class="bar"><div class="fill" style="width:${state[k]}%"></div></div></div>`;
- }
- document.getElementById("mood").textContent=state.happiness>=75?"😊 Happy":state.happiness>=45?"😐 Okay":"🥺 Needs attention";
-}
-function foodStart(){
-
-  document.getElementById("foodPetName").textContent = pet.name;
-
-  renderFoodOptions();
-
-  document.getElementById("foodOverlay").classList.add("show");
-}
-
-function foodClose(){
-
-  document.getElementById("foodOverlay").classList.remove("show");
-}
-function renderFoodOptions(){
-
-  const options = document.getElementById("foodOptions");
-  const noFood = document.getElementById("noFoodMessage");
-  const shopButton = document.getElementById("shopFoodButton");
-
-  options.innerHTML = "";
-
-  const savedInventory =
-    localStorage.getItem("cloudpet_inventory");
-
-  const inventory =
-    savedInventory ? JSON.parse(savedInventory) : [];
-
-  // Food available in the inventory
-  const foods = {};
-
-  inventory.forEach(item => {
-
-    if (
-      item.name === "Apple" ||
-      item.name === "Fish" ||
-      item.name === "Carrot"
-    ) {
-
-      if (!foods[item.name]) {
-        foods[item.name] = {
-          name: item.name,
-          emoji:
-            item.emoji ||
-            (
-                item.name === "Apple" ? "🍎" :
-                item.name === "Fish" ? "🐟" :
-                item.name === "Carrot" ? "🥕" :
-                "🍽️"
-            ),
-          count: 0
-        };
-      }
-
-      foods[item.name].count++;
-    }
-  });
-
-  const foodList = Object.values(foods);
-
-  // No food
-  if (foodList.length === 0) {
-
-    noFood.style.display = "block";
-    shopButton.style.display = "inline-block";
-
-    return;
+function readJSON(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw === null ? fallback : JSON.parse(raw);
+  } catch {
+    return fallback;
   }
-
-  noFood.style.display = "none";
-  shopButton.style.display = "none";
-
-  foodList.forEach(food => {
-
-    const button = document.createElement("button");
-
-    button.className = "food-option";
-
-    button.innerHTML = `
-      <span class="food-icon">${food.emoji}</span>
-      <span class="food-name">${food.name}</span>
-      <span class="food-count">× ${food.count}</span>
-    `;
-
-    button.onclick = () => feedWithFood(food.name);
-
-    options.appendChild(button);
-  });
 }
-function feedWithFood(foodName){
 
-  const savedInventory =
-    localStorage.getItem("cloudpet_inventory");
-
-  let inventory =
-    savedInventory ? JSON.parse(savedInventory) : [];
-
-  const index =
-    inventory.findIndex(item => item.name === foodName);
-
-  if(index === -1){
-
-    toast("🍽️ You don't have that food!");
-
-    renderFoodOptions();
-
-    return;
-  }
-
-  // Remove one food item
-  inventory.splice(index, 1);
-
-  localStorage.setItem(
-    "cloudpet_inventory",
-    JSON.stringify(inventory)
-  );
-
-  // Food effects
-  const foodEffects = {
-
-    Apple: {
-      hunger: 15,
-      happiness: 3
-    },
-
-    Fish: {
-      hunger: 20,
-      happiness: 5
-    },
-
-    Carrot: {
-      hunger: 18,
-      happiness: 4
-    }
-  };
-
-  const effect = foodEffects[foodName];
-
-  // Update pet stats
-  state.hunger =
-    clamp(state.hunger + effect.hunger);
-
-  state.happiness =
-    clamp(state.happiness + effect.happiness);
-
-  localStorage.setItem(
-  "cloudpet_pet_state_" + id,
-  JSON.stringify(state)
-);
-  // Complete Feed daily quest
-  localStorage.setItem(
-    "cloudpet_quest_feed",
-    "true"
-  );
-
-  const today = new Date();
-
-  const todayKey =
-    today.getFullYear() + "-" +
-    String(today.getMonth() + 1).padStart(2, "0") + "-" +
-    String(today.getDate()).padStart(2, "0");
-
-  localStorage.setItem(
-    "cloudpet_quest_date",
-    todayKey
-  );
-
-  // Close popup
-  foodClose();
-
-  // Show feeding animation
-  document.getElementById("visual").innerHTML =
-    visualHTML("feed");
-
-  render();
-
-  toast(
-    `${foodName} served! 🐾 ${pet.name} enjoyed the meal! 💕`
-  );
-
-  setTimeout(() => {
-
-    document.getElementById("visual").innerHTML =
-      visualHTML("idle");
-
-  }, 2500);
+function writeJSON(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* storage full or blocked */ }
 }
-function act(type){
 
-  // Update pet stats
-  for(const k in effects[type]){
-    if(k in state){
-      state[k]=clamp(state[k]+effects[type][k]);
-    }
-  }
-  localStorage.setItem(
-  "cloudpet_pet_state_" + id,
-  JSON.stringify(state)
-);
+function setFlag(key, value) {
+  try { localStorage.setItem(key, value); } catch { /* ignore */ }
+}
 
-  // Record daily quest completion
-  if(type === "feed" || type === "play"){
-    localStorage.setItem("cloudpet_quest_" + type, "true");
+function getToday() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 
-    localStorage.setItem(
-      "cloudpet_quest_date",
-      getToday()
-    );
-  }
+let toastTimer;
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
+}
 
-  // Record pet-specific discovery
-  if(pet.species === "Cat" || pet.species === "Corgi" || pet.species === "Holland Lop Rabbit"){
+/* =====================================================
+   State
+   ===================================================== */
+const params = new URLSearchParams(window.location.search);
+const requestedId = params.get("id");
+const id = PETS[requestedId] ? requestedId : "1";   // never save state under an invalid id
+const pet = PETS[id];
+const STATE_KEY = "cloudpet_pet_state_" + id;
 
-    if(pet.species === "Cat"){
-      localStorage.setItem("cloudpet_discovery_cat", "true");
-    }
+/* Merge with defaults so old/partial saves can't produce missing or unknown stats */
+const state = { ...pet.stats };
+const saved = readJSON(STATE_KEY, {});
+for (const k in state) {
+  if (typeof saved[k] === "number") state[k] = clamp(saved[k]);
+}
 
-    if(pet.species === "Corgi"){
-      localStorage.setItem("cloudpet_discovery_dog", "true");
-    }
+let currentAnimation = "idle";
 
-    if(pet.species === "Holland Lop Rabbit"){
-      localStorage.setItem("cloudpet_discovery_rabbit", "true");
-    }
-  }
-
-  // Show pet action
-  document.getElementById("visual").innerHTML=visualHTML(type);
-
-  render();
+function saveState() {
+  writeJSON(STATE_KEY, state);
   window.dispatchEvent(new Event("cloudpetStateUpdated"));
-  toast(effects[type].msg);
-
-  setTimeout(()=>{
-    document.getElementById("visual").innerHTML=visualHTML("idle");
-  },2500);
 }
 
-function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(window.tt);window.tt=setTimeout(()=>t.classList.remove("show"),2200)}
-function cleanStart(){
- document.getElementById("cleanpet").innerHTML=pet.anim?`<img src="${pet.anim.sitting||pet.anim.idle}" alt="${pet.name}">`:`<div class="emoji-fallback">${pet.emoji}</div>`;
- document.getElementById("overlay").classList.add("show");
- const s=document.getElementById("soap");s.style.left="20%";s.style.top="67%";cleaned=false;
+function completeQuest(name) {
+  setFlag("cloudpet_quest_" + name, "true");
+  setFlag("cloudpet_quest_date", getToday());
 }
-function cleanClose(){document.getElementById("overlay").classList.remove("show")}
-let drag=false,ox=0,oy=0,cleaned=false;
-const soap=document.getElementById("soap"),box=document.getElementById("cleanbox"),cleanpet=document.getElementById("cleanpet");
-soap.onpointerdown=e=>{drag=true;const r=soap.getBoundingClientRect();ox=e.clientX-r.left;oy=e.clientY-r.top;soap.setPointerCapture(e.pointerId)};
-soap.onpointermove=e=>{if(!drag)return;const r=box.getBoundingClientRect();let x=e.clientX-r.left-ox,y=e.clientY-r.top-oy;x=Math.max(5,Math.min(x,r.width-soap.offsetWidth-5));y=Math.max(60,Math.min(y,r.height-soap.offsetHeight-5));soap.style.left=x+"px";soap.style.top=y+"px";collision()};
-soap.onpointerup=()=>drag=false;
-function collision(){
- if(cleaned)return;
- const a=soap.getBoundingClientRect(),b=cleanpet.getBoundingClientRect();
- if(a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top){
-  cleaned=true;
-  localStorage.setItem("cloudpet_quest_clean", "true");
 
-  localStorage.setItem(
-  "cloudpet_quest_date",
-  getToday()
-  );
-  state.hygiene=clamp(state.hygiene+15);
-  state.happiness=clamp(state.happiness+3);
-  localStorage.setItem(
-    "cloudpet_pet_state_" + id,
-    JSON.stringify(state)
-  );
-  for(let i=0;i<14;i++){
-   const q=document.createElement("i");q.className="bubble";
-   q.style.width=q.style.height=10+Math.random()*20+"px";
-   q.style.left=(b.left-box.getBoundingClientRect().left+50+Math.random()*110)+"px";
-   q.style.top=(b.top-box.getBoundingClientRect().top+50+Math.random()*110)+"px";
-   q.style.setProperty("--x",(-60+Math.random()*120)+"px");
-   q.style.setProperty("--y",(-60-Math.random()*100)+"px");
-   box.appendChild(q);setTimeout(()=>q.remove(),1200);
+/* =====================================================
+   Rendering
+   ===================================================== */
+function barHTML(label, value, cls) {
+  return `<div class="${cls}">
+    <div class="row"><span>${label}</span><span>${value}${cls === "trait" ? "%" : ""}</span></div>
+    <div class="bar"><div class="fill" style="width:${value}%"></div></div>
+  </div>`;
+}
+
+/* One persistent <img>: changing its src keeps the old frame on screen until the
+   new GIF has loaded, so the pet never blinks out while animations swap. */
+let petImg = null;
+let currentKind = null;
+let loopTimer = null;
+let restartCount = 0;
+const gifBlobs = {};   // src -> Blob, so a GIF can restart without touching the network
+
+/* Restart a GIF from its first frame. A fresh URL makes the browser begin a new animation,
+   and the old frame stays visible until the new one is ready (no flicker). */
+function restartGif(img, src) {
+  const blob = gifBlobs[src];
+  const url = blob ? URL.createObjectURL(blob) : `${src}?r=${++restartCount}`;
+  const old = img.src;
+  img.src = url;
+  if (old.startsWith("blob:")) setTimeout(() => URL.revokeObjectURL(old), 500);
+}
+
+/* Some GIFs end with an empty frame. If pet.animLoopMs says where the real animation
+   ends (e.g. idle: 1060), restart the GIF at that point instead of letting it finish. */
+function scheduleLoop(src, ms) {
+  loopTimer = setTimeout(() => {
+    restartGif(petImg, src);
+    scheduleLoop(src, ms);
+  }, ms);
+}
+
+function setVisual(kind) {
+  const box = $("visual");
+  const src = pet.anim && pet.anim[kind];
+
+  if (!src) {
+    clearTimeout(loopTimer);
+    box.innerHTML = `<div class="emoji-fallback">${pet.emoji}</div>`;
+    petImg = null;
+    currentKind = kind;
+    return;
   }
-  render();toast(`🫧 ${pet.name} is squeaky clean!`);
-  setTimeout(()=>{cleanClose();cleaned=false},1300);
- }
-}
-function getToday(){
-  const today = new Date();
 
-  return today.getFullYear() + "-" +
-         String(today.getMonth() + 1).padStart(2, "0") + "-" +
-         String(today.getDate()).padStart(2, "0");
+  if (kind === currentKind && petImg && box.contains(petImg)) return;   // already showing it
+  currentKind = kind;
+  clearTimeout(loopTimer);
+
+  if (!petImg || !box.contains(petImg)) {
+    box.innerHTML = "";
+    petImg = document.createElement("img");
+    petImg.alt = pet.name;
+    box.appendChild(petImg);
+  }
+  petImg.src = src;
+
+  const loopMs = pet.animLoopMs && pet.animLoopMs[kind];
+  if (loopMs) scheduleLoop(src, loopMs);
 }
+
+/* Load every GIF up front so the first swap to blink/sleep/etc. is instant */
+function preloadAnimations() {
+  if (!pet.anim) return;
+  new Set(Object.values(pet.anim)).forEach(src => {
+    new Image().src = src;
+    if (location.protocol !== "file:") {   // fetch() is blocked on file:// pages
+      fetch(src).then(r => r.ok ? r.blob() : null)
+        .then(b => { if (b) gifBlobs[src] = b; })
+        .catch(() => {});
+    }
+  });
+}
+
+let animToken = 0;   // bumped on every action so an older sequence can't overwrite a newer one
+
+function showAnimation(kind, returnToIdle = true) {
+  currentAnimation = kind;
+  const token = ++animToken;
+  const stillCurrent = () => animToken === token && currentAnimation === kind;
+
+  /* Multi-step animation (e.g. Play: run -> jump -> run), then back to idle */
+  const steps = pet.sequences && pet.sequences[kind];
+  if (steps) {
+    let t = 0;
+    steps.forEach(([anim, ms]) => {
+      setTimeout(() => { if (stillCurrent()) setVisual(anim); }, t);
+      t += ms;
+    });
+    setTimeout(() => {
+      if (stillCurrent()) {
+        setVisual("idle");
+        currentAnimation = "idle";
+      }
+    }, t);
+    return;
+  }
+
+  /* Sleep: play the lie-down transition first, then loop the sleep GIF */
+  if (kind === "sleep" && pet.anim && pet.anim.goToBed) {
+    setVisual("goToBed");
+    setTimeout(() => {
+      if (currentAnimation === "sleep") setVisual("sleep");
+    }, GO_TO_BED_MS);
+    return;
+  }
+
+  setVisual(kind);
+  if (!returnToIdle) return;
+  setTimeout(() => {
+    if (currentAnimation === kind) {
+      setVisual("idle");
+      currentAnimation = "idle";
+    }
+  }, ANIM_RETURN_MS);
+}
+
+/* Idle: every few seconds, blink briefly instead of looping one GIF forever */
+function scheduleBlink() {
+  setTimeout(() => {
+    if (currentAnimation === "idle" && pet.anim && pet.anim.blink) {
+      setVisual("blink");
+      setTimeout(() => {
+        if (currentAnimation === "idle") setVisual("idle");
+      }, BLINK_MS);
+    }
+    scheduleBlink();
+  }, 4000 + Math.random() * 3000);
+}
+
+function renderHeader() {
+  document.title = `Pet Haven - ${pet.name}`;
+  $("petName").textContent = pet.name;
+  $("petInfo").textContent = `${pet.species} • ${pet.age}`;
+  $("statsHeading").textContent = `${pet.emoji} ${pet.name}'s`;
+  $("actionName").textContent = pet.name;
+  $("cleanName").textContent = pet.name;
+  $("cleanName2").textContent = pet.name;
+  $("foodPetName").textContent = pet.name;
+  $("weatherMsg").textContent = `${pet.name} is enjoying the sunny weather!`;
+  setVisual("idle");
+  $("traits").innerHTML = Object.entries(pet.traits)
+    .map(([label, val]) => barHTML(label, val, "trait"))
+    .join("");
+}
+
+function renderStats() {
+  $("stats").innerHTML = Object.keys(state)
+    .map(k => barHTML(`${STAT_ICONS[k]} ${k[0].toUpperCase() + k.slice(1)}`, Math.round(state[k]), "stat"))
+    .join("");
+  const h = state.happiness;
+  $("mood").textContent = h >= 75 ? "😊 Happy" : h >= 45 ? "😐 Okay" : "🥺 Needs attention";
+}
+
+function renderCoins() {
+  const raw = localStorage.getItem("cloudpet_coins");
+  const coins = raw === null || isNaN(Number(raw)) ? DEFAULT_COINS : Number(raw);
+  $("coinDisplay").textContent = "🪙 " + coins;
+}
+
+/* =====================================================
+   Overlays
+   ===================================================== */
+function openOverlay(idName) { $(idName).classList.add("show"); }
+function closeOverlay(idName) {
+  $(idName).classList.remove("show");
+  if (idName === "cleanOverlay") clearInterval(cleanLoopTimer);
+}
+
+document.querySelectorAll("[data-close]").forEach(btn =>
+  btn.addEventListener("click", () => closeOverlay(btn.dataset.close)));
+
+document.querySelectorAll(".overlay").forEach(ov =>
+  ov.addEventListener("click", e => { if (e.target === ov) closeOverlay(ov.id); }));
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") document.querySelectorAll(".overlay.show").forEach(o => closeOverlay(o.id));
+});
+
+/* =====================================================
+   Actions: play / sleep
+   ===================================================== */
+function applyEffects(effects) {
+  for (const k in effects) {
+    if (k in state) state[k] = clamp(state[k] + effects[k]);
+  }
+}
+
+function act(type) {
+  applyEffects(EFFECTS[type]);
+  saveState();
+
+  if (type === "play") completeQuest("play");
+  if (pet.discovery) setFlag("cloudpet_discovery_" + pet.discovery, "true");
+
+  showAnimation(type, type !== "sleep");   // sleeping stays until the next action
+  renderStats();
+  toast(pet.msgs[type]);
+}
+
+/* =====================================================
+   Feeding
+   ===================================================== */
+function getInventory() {
+  const inv = readJSON("cloudpet_inventory", []);
+  return Array.isArray(inv) ? inv : [];
+}
+
+function foodStart() {
+  renderFoodOptions();
+  openOverlay("foodOverlay");
+}
+
+function renderFoodOptions() {
+  const container = $("foodOptions");
+  const counts = {};
+  for (const item of getInventory()) {
+    if (item && FOODS[item.name]) counts[item.name] = (counts[item.name] || 0) + 1;
+  }
+
+  const names = Object.keys(counts);
+  const hasFood = names.length > 0;
+  $("noFoodMessage").hidden = hasFood;
+  $("shopFoodButton").hidden = hasFood;
+
+  container.innerHTML = names.map(name => `
+    <button class="food-option" data-food="${name}">
+      <span class="food-icon">${FOODS[name].emoji}</span>
+      <span class="food-name">${name}</span>
+      <span class="food-count">× ${counts[name]}</span>
+    </button>`).join("");
+}
+
+$("foodOptions").addEventListener("click", e => {
+  const btn = e.target.closest("[data-food]");
+  if (btn) feedWithFood(btn.dataset.food);
+});
+
+function feedWithFood(foodName) {
+  const inventory = getInventory();
+  const index = inventory.findIndex(item => item && item.name === foodName);
+
+  if (index === -1 || !FOODS[foodName]) {
+    toast("🍽️ You don't have that food!");
+    renderFoodOptions();
+    return;
+  }
+
+  inventory.splice(index, 1);
+  writeJSON("cloudpet_inventory", inventory);
+
+  applyEffects({ hunger: FOODS[foodName].hunger, happiness: FOODS[foodName].happiness });
+  saveState();
+  completeQuest("feed");
+
+  closeOverlay("foodOverlay");
+  showAnimation("feed");
+  renderStats();
+  toast(`${foodName} served! 🐾 ${pet.name} enjoyed the meal! 💕`);
+}
+
+/* =====================================================
+   Cleaning mini-game
+   ===================================================== */
+const soap = $("soap");
+const cleanbox = $("cleanbox");
+const cleanpet = $("cleanpet");
+let dragging = false, offsetX = 0, offsetY = 0, cleaned = false;
+
+let cleanLoopTimer = null;
+
+function cleanStart() {
+  const kind = pet.anim && pet.anim.sitting ? "sitting" : "idle";
+  const src = pet.anim && pet.anim[kind];
+  cleanpet.innerHTML = src
+    ? `<img src="${src}" alt="${pet.name}">`
+    : `<div class="emoji-fallback">${pet.emoji}</div>`;
+
+  /* Same fix as the main view: restart the GIF before its empty last frame */
+  clearInterval(cleanLoopTimer);
+  const loopMs = pet.animLoopMs && pet.animLoopMs[kind];
+  const img = cleanpet.querySelector("img");
+  if (img && loopMs) cleanLoopTimer = setInterval(() => restartGif(img, src), loopMs);
+
+  soap.style.left = "20%";
+  soap.style.top = "67%";
+  cleaned = false;
+  openOverlay("cleanOverlay");
+}
+
+soap.addEventListener("pointerdown", e => {
+  dragging = true;
+  const r = soap.getBoundingClientRect();
+  offsetX = e.clientX - r.left;
+  offsetY = e.clientY - r.top;
+  soap.setPointerCapture(e.pointerId);
+});
+
+soap.addEventListener("pointermove", e => {
+  if (!dragging) return;
+  const r = cleanbox.getBoundingClientRect();
+  const x = Math.max(5, Math.min(e.clientX - r.left - offsetX, r.width - soap.offsetWidth - 5));
+  const y = Math.max(60, Math.min(e.clientY - r.top - offsetY, r.height - soap.offsetHeight - 5));
+  soap.style.left = x + "px";
+  soap.style.top = y + "px";
+  checkSoapCollision();
+});
+
+["pointerup", "pointercancel"].forEach(ev =>
+  soap.addEventListener(ev, () => { dragging = false; }));
+
+function checkSoapCollision() {
+  if (cleaned) return;
+  const a = soap.getBoundingClientRect();
+  const b = cleanpet.getBoundingClientRect();
+
+  /* The pet circle is round, so test against the circle, not its square bounding box:
+     the soap counts as "on the pet" once its centre is inside the circle. */
+  const dx = (a.left + a.width / 2) - (b.left + b.width / 2);
+  const dy = (a.top + a.height / 2) - (b.top + b.height / 2);
+  if (Math.hypot(dx, dy) > b.width / 2) return;
+
+  cleaned = true;
+  completeQuest("clean");
+  applyEffects({ hygiene: 15, happiness: 3 });
+  saveState();
+  spawnBubbles(b);
+  renderStats();
+  toast(`🫧 ${pet.name} is squeaky clean!`);
+
+  setTimeout(() => closeOverlay("cleanOverlay"), 1300);
+}
+
+function spawnBubbles(petRect) {
+  const boxRect = cleanbox.getBoundingClientRect();
+  for (let i = 0; i < 14; i++) {
+    const bubble = document.createElement("i");
+    bubble.className = "bubble";
+    bubble.style.width = bubble.style.height = 10 + Math.random() * 20 + "px";
+    bubble.style.left = petRect.left - boxRect.left + 50 + Math.random() * 110 + "px";
+    bubble.style.top = petRect.top - boxRect.top + 50 + Math.random() * 110 + "px";
+    bubble.style.setProperty("--x", -60 + Math.random() * 120 + "px");
+    bubble.style.setProperty("--y", -60 - Math.random() * 100 + "px");
+    cleanbox.appendChild(bubble);
+    setTimeout(() => bubble.remove(), 1200);
+  }
+}
+
+/* =====================================================
+   Wire up buttons + init
+   ===================================================== */
+const ACTIONS = { feed: foodStart, clean: cleanStart, play: () => act("play"), sleep: () => act("sleep") };
+
+document.querySelectorAll("[data-action]").forEach(btn =>
+  btn.addEventListener("click", () => ACTIONS[btn.dataset.action]()));
+
 renderHeader();
-render();
-const coinDisplay = document.getElementById("coinDisplay");
-
-const savedCoins = localStorage.getItem("cloudpet_coins");
-
-coinDisplay.textContent =
-  "🪙 " + (savedCoins === null ? 250 : Number(savedCoins));
+renderStats();
+renderCoins();
+preloadAnimations();
+scheduleBlink();
 </script>
 </body>
 </html>
