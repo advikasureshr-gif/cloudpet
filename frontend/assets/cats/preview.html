@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cat GIF preview</title>
+<style>
+ body{font-family:system-ui,sans-serif;background:#f2e6fb;color:#3a1a5c;margin:0;padding:24px}
+ h1{margin:0 0 6px} p{color:#6b4a8f;margin:0 0 16px}
+ .tabs{display:flex;gap:8px;margin-bottom:18px}
+ .tabs button{border:0;border-radius:999px;padding:8px 18px;font-weight:800;cursor:pointer;background:#e6d3f5;color:#3a1a5c}
+ .tabs button.on{background:#8c4fd6;color:#fff}
+ .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+ .tile{background:#fff;border-radius:14px;padding:12px;text-align:center;box-shadow:0 4px 12px rgba(44,18,80,.15)}
+ .tile img{width:128px;height:128px;image-rendering:pixelated;background:#ead8f5;border-radius:10px}
+ .n{font-weight:800;font-size:.8rem;margin-top:6px;word-break:break-all}
+ .m{font-size:.72rem;color:#6b4a8f}
+</style></head><body>
+<h1>🐈 Cat GIF preview</h1>
+<p>Put this file next to the <code>black</code>, <code>orange</code> and <code>grey</code> folders. Each tile shows the file name, frame count and frame time.</p>
+<div id="diag" style="display:none;background:#fff3cd;color:#5a3b00;border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:.85rem;line-height:1.5"></div>
+<div class="tabs" id="tabs"></div><div class="grid" id="grid"></div>
+<script>
+const ITEMS=[{"name": "go_to_bed", "kind": "gif", "frames": 3, "ms": "500/500/400, plays once"},{"name": "pose_sit", "kind": "stills", "frames": 4, "ms": 120}, {"name": "pose_stand", "kind": "stills", "frames": 4, "ms": 120}, {"name": "walk_down", "kind": "gif", "frames": 6, "ms": 100}, {"name": "walk_up", "kind": "gif", "frames": 6, "ms": 100}, {"name": "walk_right", "kind": "gif", "frames": 6, "ms": 100}, {"name": "walk_left", "kind": "gif", "frames": 6, "ms": 100}, {"name": "lie_down_sequence", "kind": "gif", "frames": 14, "ms": 150}, {"name": "stand_to_lie", "kind": "gif", "frames": 3, "ms": 220}, {"name": "run_down", "kind": "gif", "frames": 4, "ms": 100}, {"name": "run_up", "kind": "gif", "frames": 4, "ms": 100}, {"name": "run_right", "kind": "gif", "frames": 5, "ms": 100}, {"name": "run_left", "kind": "gif", "frames": 5, "ms": 100}, {"name": "lick_paw_sit_front", "kind": "gif", "frames": 8, "ms": 120}, {"name": "lick_paw_lie_front", "kind": "gif", "frames": 8, "ms": 120}, {"name": "meow_sit_front", "kind": "gif", "frames": 3, "ms": 120}, {"name": "meow_lie_front", "kind": "gif", "frames": 3, "ms": 120}, {"name": "meow_stand_front", "kind": "gif", "frames": 3, "ms": 120}, {"name": "scratch_sit_left", "kind": "gif", "frames": 8, "ms": 120}, {"name": "scratch_sit_right", "kind": "gif", "frames": 8, "ms": 120}, {"name": "tail_wag_sit_front", "kind": "gif", "frames": 5, "ms": 160}, {"name": "tail_wag_sit_back", "kind": "gif", "frames": 5, "ms": 160}, {"name": "tail_wag_sit_left", "kind": "gif", "frames": 5, "ms": 160}, {"name": "tail_wag_sit_right", "kind": "gif", "frames": 5, "ms": 160}, {"name": "tail_wag_stand_front", "kind": "gif", "frames": 5, "ms": 160}, {"name": "tail_wag_stand_back", "kind": "gif", "frames": 5, "ms": 160}, {"name": "tail_wag_stand_left", "kind": "gif", "frames": 5, "ms": 160}, {"name": "tail_wag_stand_right", "kind": "gif", "frames": 5, "ms": 160}, {"name": "tail_wag_lie_left", "kind": "gif", "frames": 3, "ms": 160}, {"name": "tail_wag_lie_right", "kind": "gif", "frames": 3, "ms": 160}, {"name": "right_paw_swipe_stand_front", "kind": "gif", "frames": 11, "ms": 120}, {"name": "left_paw_swipe_stand_front", "kind": "gif", "frames": 11, "ms": 120}, {"name": "paw_swipe_stand_back", "kind": "gif", "frames": 5, "ms": 120}, {"name": "left_paw_swipe_stand_left", "kind": "gif", "frames": 11, "ms": 120}, {"name": "right_paw_swipe_stand_left", "kind": "gif", "frames": 11, "ms": 120}, {"name": "left_paw_swipe_stand_right", "kind": "gif", "frames": 11, "ms": 120}, {"name": "right_paw_swipe_stand_right", "kind": "gif", "frames": 11, "ms": 120}, {"name": "right_paw_swipe_sit_front", "kind": "gif", "frames": 11, "ms": 120}, {"name": "left_paw_swipe_sit_front", "kind": "gif", "frames": 11, "ms": 120}, {"name": "paw_swipe_sit_back", "kind": "gif", "frames": 5, "ms": 120}, {"name": "left_paw_swipe_sit_left", "kind": "gif", "frames": 11, "ms": 120}, {"name": "right_paw_swipe_sit_left", "kind": "gif", "frames": 11, "ms": 120}, {"name": "left_paw_swipe_sit_right", "kind": "gif", "frames": 11, "ms": 120}, {"name": "right_paw_swipe_sit_right", "kind": "gif", "frames": 11, "ms": 120}, {"name": "yawn_sit_front", "kind": "gif", "frames": 7, "ms": 120}, {"name": "sleep_1_left_front", "kind": "gif", "frames": 2, "ms": 600}, {"name": "sleep_1_right_front", "kind": "gif", "frames": 2, "ms": 600}, {"name": "sleep_1_left_back", "kind": "gif", "frames": 2, "ms": 600}, {"name": "sleep_1_right_back", "kind": "gif", "frames": 2, "ms": 600}, {"name": "sleep_2_left_front", "kind": "gif", "frames": 2, "ms": 600}, {"name": "sleep_2_right_front", "kind": "gif", "frames": 2, "ms": 600}, {"name": "sleep_3_left_front", "kind": "gif", "frames": 2, "ms": 600}, {"name": "sleep_3_right_front", "kind": "gif", "frames": 2, "ms": 600}, {"name": "sleep_4_left_front", "kind": "gif", "frames": 2, "ms": 600}, {"name": "sleep_4_right_front", "kind": "gif", "frames": 2, "ms": 600}, {"name": "sleep_5_left_front", "kind": "gif", "frames": 2, "ms": 600}, {"name": "sleep_5_right_front", "kind": "gif", "frames": 2, "ms": 600}, {"name": "eat_food_stand_front", "kind": "gif", "frames": 10, "ms": 120}, {"name": "eat_food_stand_back", "kind": "gif", "frames": 8, "ms": 120}, {"name": "eat_food_stand_left", "kind": "gif", "frames": 10, "ms": 120}, {"name": "eat_food_stand_right", "kind": "gif", "frames": 10, "ms": 120}, {"name": "hiss_front_left", "kind": "gif", "frames": 2, "ms": 250}, {"name": "hiss_front_right", "kind": "gif", "frames": 2, "ms": 250}, {"name": "jump_back", "kind": "gif", "frames": 3, "ms": 110}, {"name": "jump_left", "kind": "gif", "frames": 5, "ms": 110}, {"name": "jump_right", "kind": "gif", "frames": 5, "ms": 110}, {"name": "on_hind_legs", "kind": "gif", "frames": 4, "ms": 180}];
+const CATS=["orange","grey","black"];
+let failed=[];
+function report(){
+  const d=document.getElementById("diag");
+  if(!failed.length){d.style.display="none";return;}
+  d.style.display="block";
+  d.innerHTML=`⚠️ <b>${failed.length}</b> image(s) could not be found.<br><b>This page is at:</b> ${decodeURI(location.href)}<br><b>It looked for:</b> ${decodeURI(failed[0])}<br>The <code>orange</code>, <code>grey</code> and <code>black</code> folders must sit in the <b>same folder as this page</b>, with the GIFs directly inside them.`;
+}
+function show(cat){
+  failed=[];
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.c===cat));
+  const g=document.getElementById("grid"); g.innerHTML="";
+  ITEMS.forEach(it=>{
+    const files = it.kind==="gif" ? [it.name+".gif"] : [1,2,3,4].map(i=>`${it.name}_${i}.png`);
+    files.forEach(f=>{
+      const t=document.createElement("div"); t.className="tile";
+      t.innerHTML=`<img src="${cat}/${f}" alt="${f}" onerror="failed.push(this.src);report()"><div class="n">${f}</div><div class="m">${it.kind==="gif"?it.frames+" frames · "+it.ms+" ms":"still"}</div>`;
+      g.appendChild(t);
+    });
+  });
+}
+CATS.forEach(c=>{const b=document.createElement("button");b.textContent=c;b.dataset.c=c;b.onclick=()=>show(c);document.getElementById("tabs").appendChild(b)});
+show("orange");
+</script></body></html>

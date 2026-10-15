@@ -389,6 +389,22 @@ const BLINK_MS = 1060;       // blink.gif's real animation is 1080ms; its last f
 
 const BUNNY = "../animation_packs/32PixelBunny/32PixelBunny/GIF/";
 
+/* The three coloured cats share the same animation set, one folder per colour */
+const CAT_GO_TO_BED_MS = 1400;   // go_to_bed.gif: 500 + 500 + 400 ms, plays once, then sleep loops
+const CAT_SEQUENCES = { play: [["play", 1000], ["jump", 550], ["play", 1000]] };   // run, jump, run
+function catAnim(color) {
+  const dir = `assets/cats/${color}/`;
+  return {
+    idle: dir + "tail_wag_sit_front.gif",
+    feed: dir + "eat_food_stand_front.gif",
+    play: dir + "run_right.gif",
+    jump: dir + "jump_right.gif",
+    goToBed: dir + "go_to_bed.gif",
+    sleep: dir + "sleep_2_left_front.gif",
+    sitting: dir + "tail_wag_sit_front.gif"      // clean mini-game pose
+  };
+}
+
 /* One entry per home.html card id */
 const PETS = {
   1: {
@@ -414,6 +430,7 @@ const PETS = {
       sitting: "assets/dog/idle.gif"
     },
     /* idle.gif's tail-lift ends at 1080ms; the last 540ms frame is empty, so restart before it */
+    goToBedMs: GO_TO_BED_MS,
     animLoopMs: { idle: 1060, sitting: 1060 },
     /* Play = run, jump, run. Each step is [animation, milliseconds]:
        running.gif loops every 560ms, jump-full.gif lasts 1960ms. */
@@ -435,25 +452,25 @@ const PETS = {
     }
   },
   4: {
-    name: "Ember", species: "Fennec Fox", age: "1 year old", emoji: "🦊",
-    traits: { "❤️ Affection": 60, "🎾 Playfulness": 80, "😼 Independence": 85 },
-    stats: { health: 64, hunger: 55, happiness: 70, energy: 60, hygiene: 65 },
-    msgs: { feed: "🍗 Ember snapped it up!", play: "🏃 Ember zoomed around!", sleep: "😴 Ember dozed off!" },
-    anim: null
+    name: "Ember", species: "Orange Cat", discovery: "cat", age: "2 years old", emoji: "🐱",
+    traits: { "❤️ Affection": 75, "🎾 Playfulness": 85, "😼 Independence": 60 },
+    stats: { health: 80, hunger: 65, happiness: 75, energy: 70, hygiene: 70 },
+    msgs: { feed: "🍗 Ember gobbled it up!", play: "🏃 Ember zoomed around!", sleep: "😴 Ember curled up for a nap!" },
+    anim: catAnim("orange"), goToBedMs: CAT_GO_TO_BED_MS, sequences: CAT_SEQUENCES
   },
   5: {
-    name: "Waffle", species: "Hamster", age: "8 months old", emoji: "🐹",
-    traits: { "❤️ Affection": 70, "🎾 Playfulness": 85, "😼 Independence": 50 },
-    stats: { health: 91, hunger: 80, happiness: 88, energy: 70, hygiene: 85 },
-    msgs: { feed: "🌻 Waffle stuffed its cheeks!", play: "🎡 Waffle ran on the wheel!", sleep: "😴 Waffle burrowed in for a nap!" },
-    anim: null
+    name: "Misty", species: "Grey Cat", discovery: "cat", age: "3 years old", emoji: "🐱",
+    traits: { "❤️ Affection": 70, "🎾 Playfulness": 55, "😼 Independence": 85 },
+    stats: { health: 85, hunger: 70, happiness: 72, energy: 60, hygiene: 80 },
+    msgs: { feed: "🐟 Misty enjoyed the treat!", play: "🧶 Misty pounced around!", sleep: "😴 Misty curled up for a nap!" },
+    anim: catAnim("grey"), goToBedMs: CAT_GO_TO_BED_MS, sequences: CAT_SEQUENCES
   },
   6: {
-    name: "Shelly", species: "Box Turtle", age: "5 years old", emoji: "🐢",
-    traits: { "❤️ Affection": 50, "🎾 Playfulness": 40, "😼 Independence": 95 },
-    stats: { health: 78, hunger: 90, happiness: 75, energy: 50, hygiene: 80 },
-    msgs: { feed: "🥬 Shelly munched the greens!", play: "🐢 Shelly explored slowly!", sleep: "😴 Shelly tucked into its shell!" },
-    anim: null
+    name: "Midnight", species: "Black Cat", discovery: "cat", age: "4 years old", emoji: "🐈‍⬛",
+    traits: { "❤️ Affection": 65, "🎾 Playfulness": 70, "😼 Independence": 90 },
+    stats: { health: 90, hunger: 60, happiness: 70, energy: 75, hygiene: 75 },
+    msgs: { feed: "🐟 Midnight enjoyed the meal!", play: "🌙 Midnight sprinted about!", sleep: "😴 Midnight curled up for a nap!" },
+    anim: catAnim("black"), goToBedMs: CAT_GO_TO_BED_MS, sequences: CAT_SEQUENCES
   }
 };
 
@@ -643,7 +660,7 @@ function showAnimation(kind, returnToIdle = true) {
     setVisual("goToBed");
     setTimeout(() => {
       if (currentAnimation === "sleep") setVisual("sleep");
-    }, GO_TO_BED_MS);
+    }, pet.goToBedMs || GO_TO_BED_MS);
     return;
   }
 
