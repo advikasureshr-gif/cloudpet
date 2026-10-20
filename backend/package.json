@@ -1,0 +1,25 @@
+{
+  "name": "cloudpet-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Cloudpet API: Express locally, the same functions become Lambdas on AWS",
+  "scripts": {
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:create": "node scripts/create-table.js",
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.600.0",
+    "@aws-sdk/lib-dynamodb": "^3.600.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "dynalite": "^4.0.0"
+  }
+}
