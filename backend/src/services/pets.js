@@ -1,9 +1,11 @@
 import { PutCommand, QueryCommand, UpdateCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 import { db, TABLE } from "../db.js";
-import { PET_CATALOG, MAX_PETS } from "../catalog.js";
+import { PET_CATALOG, MAX_PETS, EFFECTS, FOODS, SHOP_ITEMS } from "../catalog.js";
 import { AppError } from "../errors.js";
 import { getOrCreateProfile } from "./users.js";
 import { newPetItem, toPetDto, userKey } from "../items.js";
+import { consumeOne, giveBack, countOwned } from "./inventory.js";
+import { recordAction } from "./quests.js";
 
 export async function listPets(userId) {
   const res = await db.send(new QueryCommand({
@@ -77,4 +79,92 @@ export async function buyPet(userId, type) {
     }));
     throw err;
   }
+}
+
+
+/* ---------- Caring for a pet ---------- */
+
+const clamp = n => Math.max(0, Math.min(100, n));
+
+// Reads the pet, adds the effects, writes it back. If another request changed the pet in between
+// (the "version" no longer matches), it reads again and retries, so no change is lost.
+async function applyEffects(userId, uid, effects) {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const pet = await getPet(userId, uid);
+    if (!pet) throw new AppError(404, "no-such-pet", "You don't have that pet.");
+
+    const stats = { ...pet.stats };
+    for (const k of Object.keys(effects)) stats[k] = clamp((stats[k] ?? 0) + effects[k]);
+
+    const hasVersion = typeof pet.version === "number";
+    try {
+      const res = await db.send(new UpdateCommand({
+        TableName: TABLE,
+        Key: { pk: userKey(userId), sk: "PET#" + uid },
+        ConditionExpression: hasVersion ? "version = :v" : "attribute_not_exists(version)",
+        UpdateExpression: "SET stats = :stats, lastInteraction = :now, version = :next",
+        ExpressionAttributeValues: {
+          ":stats": stats, ":now": new Date().toISOString(),
+          ":next": (hasVersion ? pet.version : 0) + 1,
+          ...(hasVersion ? { ":v": pet.version } : {})
+        },
+        ReturnValues: "ALL_NEW"
+      }));
+      return res.Attributes;
+    } catch (err) {
+      if (err.name !== "ConditionalCheckFailedException") throw err;
+    }
+  }
+  throw new AppError(409, "busy", "That pet is busy right now. Try again.");
+}
+
+export async function doAction(userId, uid, type, day) {
+  if (!EFFECTS[type]) throw new AppError(400, "unknown-action", "Unknown action.");
+  const pet = await applyEffects(userId, uid, EFFECTS[type]);
+  await recordAction(userId, type, day, uid);
+  return toPetDto(pet);
+}
+
+export async function feedPet(userId, uid, food, day) {
+  if (!FOODS[food]) throw new AppError(400, "unknown-food", "That isn't food.");
+  if (!(await getPet(userId, uid))) throw new AppError(404, "no-such-pet", "You don't have that pet.");
+
+  if (!(await consumeOne(userId, food))) {
+    throw new AppError(409, "no-food", `You don't have any ${food}.`);
+  }
+
+  try {
+    const pet = await applyEffects(userId, uid, FOODS[food]);
+    await recordAction(userId, "feed", day, uid);
+    return toPetDto(pet);
+  } catch (err) {
+    await giveBack(userId, food);              // the pet wasn't fed, so the food isn't used up
+    throw err;
+  }
+}
+
+// An accessory can be worn by one pet at a time, and you can only wear as many as you own.
+export async function equipAccessory(userId, uid, accessory) {
+  const pet = await getPet(userId, uid);
+  if (!pet) throw new AppError(404, "no-such-pet", "You don't have that pet.");
+
+  if (accessory !== null) {
+    const item = SHOP_ITEMS[accessory];
+    if (!item || item.category !== "accessories") throw new AppError(400, "unknown-accessory", "That isn't an accessory.");
+
+    const owned = await countOwned(userId, accessory);
+    const wornByOthers = (await listPets(userId)).filter(p => p.equipped === accessory && p.sk !== pet.sk).length;
+    if (owned - wornByOthers < 1) {
+      throw new AppError(409, "none-left", `All your ${accessory} items are already being worn.`);
+    }
+  }
+
+  const res = await db.send(new UpdateCommand({
+    TableName: TABLE,
+    Key: { pk: userKey(userId), sk: "PET#" + uid },
+    UpdateExpression: "SET equipped = :a",
+    ExpressionAttributeValues: { ":a": accessory },
+    ReturnValues: "ALL_NEW"
+  }));
+  return toPetDto(res.Attributes);
 }

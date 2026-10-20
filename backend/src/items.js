@@ -15,6 +15,7 @@ export function newPetItem(userId, type, name) {
     name,
     stats: { ...PET_CATALOG[type].stats },
     equipped: null,
+    version: 0,                                // bumped on every change; stops two requests overwriting each other
     createdAt: now,
     lastInteraction: now                       // used to work out how much time passed while you were away
   };
@@ -30,4 +31,12 @@ export function toPetDto(item) {
     createdAt: item.createdAt,
     lastInteraction: item.lastInteraction
   };
+}
+
+export const invKey = name => `INV#${name}`;
+export const questKey = day => `QUEST#${day}`;
+
+// "2026-10-20" for the player's own calendar day (utcOffset = minutes ahead of UTC, e.g. India = 330)
+export function dayString(now = new Date(), utcOffset = 0) {
+  return new Date(now.getTime() + utcOffset * 60000).toISOString().slice(0, 10);
 }

@@ -2,17 +2,19 @@ import express from "express";
 import cors from "cors";
 import { requireUser } from "./auth.js";
 import { AppError } from "./errors.js";
-import { PET_CATALOG, MAX_PETS } from "./catalog.js";
-import { getOrCreateProfile, touchVisit, setCoins, deleteUser } from "./services/users.js";
-import { listPets, buyPet } from "./services/pets.js";
-import { toPetDto } from "./items.js";
+import { PET_CATALOG, MAX_PETS, SHOP_ITEMS } from "./catalog.js";
+import { getOrCreateProfile, touchVisit, setCoins, deleteUser, updateProfile, setTheme } from "./services/users.js";
+import { listPets, buyPet, doAction, feedPet, equipAccessory } from "./services/pets.js";
+import { listInventory, buyItem } from "./services/inventory.js";
+import { getQuests, claimQuest } from "./services/quests.js";
+import { toPetDto, dayString } from "./items.js";
 
 // Wraps an async route so a thrown error reaches the error handler below.
 const route = fn => (req, res, next) => Promise.resolve(fn(req, res)).catch(next);
 
 const profileDto = p => ({
   userId: p.userId, coins: p.coins, petCount: p.petCount,
-  name: p.name, avatar: p.avatar, theme: p.theme, lastVisit: p.lastVisit
+  name: p.name, email: p.email || "petparent@cloudpet.com", avatar: p.avatar, theme: p.theme, lastVisit: p.lastVisit
 });
 
 export function createApp() {
@@ -28,12 +30,20 @@ export function createApp() {
       maxPets: MAX_PETS,
       pets: Object.entries(PET_CATALOG).map(([type, k]) => ({
         type: Number(type), name: k.name, species: k.species, emoji: k.emoji, price: k.price
+      })),
+      items: Object.entries(SHOP_ITEMS).map(([name, i]) => ({
+        name, category: i.category, icon: i.icon, price: i.price, description: i.description
       }))
     });
   });
 
   // Everything below needs a signed-in user.
   app.use("/api", requireUser);
+  app.use("/api", (req, _res, next) => {
+    const offset = parseInt(req.get("x-utc-offset-minutes"), 10);       // e.g. 330 for India
+    req.utcOffset = Number.isFinite(offset) ? Math.max(-840, Math.min(840, offset)) : 0;
+    next();
+  });
 
   // Coins + profile. Called when a page opens.
   app.get("/api/me", route(async (req, res) => {
@@ -50,6 +60,49 @@ export function createApp() {
   app.post("/api/shop/pets", route(async (req, res) => {
     const type = Number(req.body && req.body.type);
     res.status(201).json(await buyPet(req.userId, type));
+  }));
+
+  // The player's own calendar day (the browser sends its UTC offset), so daily quests reset at THEIR midnight.
+  const today = req => dayString(new Date(), req.utcOffset);
+
+  app.put("/api/me", route(async (req, res) => {
+    res.json(profileDto(await updateProfile(req.userId, req.body || {})));
+  }));
+
+  app.put("/api/me/theme", route(async (req, res) => {
+    res.json(profileDto(await setTheme(req.userId, req.body && req.body.theme)));
+  }));
+
+  app.get("/api/inventory", route(async (req, res) => {
+    await getOrCreateProfile(req.userId);
+    res.json({ items: await listInventory(req.userId) });
+  }));
+
+  app.post("/api/shop/items", route(async (req, res) => {
+    res.status(201).json(await buyItem(req.userId, req.body && req.body.name));
+  }));
+
+  app.post("/api/pets/:uid/actions", route(async (req, res) => {
+    res.json({ pet: await doAction(req.userId, req.params.uid, req.body && req.body.type, today(req)) });
+  }));
+
+  app.post("/api/pets/:uid/feed", route(async (req, res) => {
+    res.json({ pet: await feedPet(req.userId, req.params.uid, req.body && req.body.food, today(req)) });
+  }));
+
+  app.put("/api/pets/:uid/equipment", route(async (req, res) => {
+    const accessory = req.body && "accessory" in req.body ? req.body.accessory : undefined;
+    if (accessory === undefined) throw new AppError(400, "bad-request", "Send { accessory: name } or { accessory: null }.");
+    res.json({ pet: await equipAccessory(req.userId, req.params.uid, accessory) });
+  }));
+
+  app.get("/api/quests", route(async (req, res) => {
+    res.json(await getQuests(req.userId, today(req)));
+  }));
+
+  app.post("/api/quests/:id/claim", route(async (req, res) => {
+    const result = await claimQuest(req.userId, req.params.id, today(req));
+    res.json({ ...result, ...(await getQuests(req.userId, today(req))) });
   }));
 
   // Development helpers: top up coins or start over. Switched off with DEV_ROUTES=false.
