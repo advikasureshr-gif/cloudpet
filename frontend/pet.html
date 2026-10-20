@@ -12,6 +12,9 @@
   --card-soft: #f8effc;
   --purple: #8c4fd6;
   --pink: #ff6fa5;
+  --bg-deep: #2c1250;
+  --bg-mid: #6a2f8f;
+  --bg-light: #d68ecb;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -20,7 +23,7 @@ body {
   font-family: 'Nunito', 'Segoe UI', system-ui, sans-serif;
   min-height: 100vh;
   color: var(--ink);
-  background: linear-gradient(160deg, #2c1250 0%, #6a2f8f 45%, #d68ecb 100%);
+  background: linear-gradient(160deg, var(--bg-deep) 0%, var(--bg-mid) 45%, var(--bg-light) 100%);
   background-attachment: fixed;
   padding-bottom: 40px;
 }
@@ -114,6 +117,7 @@ main { width: min(1080px, 92%); margin: 30px auto; }
   place-items: center;
   border-radius: 22px;
   background: #ead8f5;
+  background: color-mix(in srgb, var(--purple) 16%, white);
   overflow: hidden;
 }
 .visual img { width: 75%; height: 75%; object-fit: contain; image-rendering: pixelated; }
@@ -129,6 +133,24 @@ h1 { font-size: 2rem; margin-top: 12px; }
 h2 { font-size: 1.15rem; margin: 20px 0 14px; }
 .card > h2:first-child { margin-top: 0; }
 .info { color: var(--ink-soft); margin: 5px 0; }
+.petcard { position: relative; }
+.wearing-badge {
+  position: absolute; top: 38px; right: 38px; z-index: 2;
+  width: 46px; height: 46px; border-radius: 50%;
+  display: none; place-items: center; font-size: 1.6rem;
+  background: #fff; box-shadow: 0 4px 10px rgba(44, 18, 80, 0.25);
+}
+.wearing-badge.show { display: grid; }
+.acc-list { display: flex; flex-wrap: wrap; gap: 10px; }
+.acc-btn {
+  border: 2px solid var(--purple); background: #fff; color: var(--purple);
+  border-radius: 999px; padding: 8px 14px; font-weight: 800; cursor: pointer; font-size: 0.88rem;
+}
+.acc-btn:hover:not(:disabled) { background: var(--purple); color: #fff; }
+.acc-btn.on { background: var(--purple); color: #fff; }
+.acc-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.acc-note { color: var(--ink-soft); font-size: 0.85rem; margin-top: 10px; }
+.acc-note a { color: var(--purple); font-weight: 800; text-decoration: underline; }
 .mood {
   display: inline-block;
   background: #fff;
@@ -143,7 +165,7 @@ h2 { font-size: 1.15rem; margin: 20px 0 14px; }
 .trait, .stat { margin: 13px 0; }
 .row { display: flex; justify-content: space-between; font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; }
 .bar { height: 10px; background: rgba(255, 255, 255, 0.55); border-radius: 20px; overflow: hidden; }
-.fill { height: 100%; background: linear-gradient(90deg, #7a438f, #e987b3); border-radius: 20px; transition: width 0.3s; }
+.fill { height: 100%; background: linear-gradient(90deg, var(--purple), var(--pink)); border-radius: 20px; transition: width 0.3s; }
 
 /* ---------- Actions ---------- */
 .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -333,7 +355,8 @@ h2 { font-size: 1.15rem; margin: 20px 0 14px; }
   <a class="back" href="home.html">← Back to Home</a>
 
   <div class="grid">
-    <section class="card">
+    <section class="card petcard">
+      <div class="wearing-badge" id="wearingBadge" aria-hidden="true"></div>
       <div class="visual" id="visual"></div>
       <h1 id="petName"></h1>
       <p class="info" id="petInfo"></p>
@@ -353,6 +376,10 @@ h2 { font-size: 1.15rem; margin: 20px 0 14px; }
         <button class="action" data-action="clean">🧼 Clean</button>
         <button class="action" data-action="sleep">😴 Sleep</button>
       </div>
+
+      <h2>🎀 Accessories</h2>
+      <div class="acc-list" id="accList"></div>
+      <p class="acc-note" id="accNote"></p>
 
       <div class="weather">
         <strong>☀️ Sunny • 28°C</strong><br>
@@ -554,10 +581,26 @@ function toast(msg) {
    State
    ===================================================== */
 const params = new URLSearchParams(window.location.search);
-const requestedId = params.get("id");
-const id = PETS[requestedId] ? requestedId : "1";   // never save state under an invalid id
-const pet = PETS[id];
-const STATE_KEY = "cloudpet_pet_state_" + id;
+
+/* Which pets does the player own? (written by state.js on home/shop; Luna is the free starter) */
+const STARTER = { uid: "1", type: 1, name: "Luna" };
+let ownedPets = readJSON("cloudpet_pets", null);
+if (!Array.isArray(ownedPets)) ownedPets = [STARTER];
+ownedPets = ownedPets.filter(p => p && PETS[p.type]);
+
+/* ?pet=<uid> picks one owned pet. An old-style ?id=<kind> opens the first owned pet of that kind. */
+const requestedUid = params.get("pet");
+const requestedKind = params.get("id");
+const owned = ownedPets.find(p => String(p.uid) === requestedUid)
+           || (requestedUid === null ? ownedPets.find(p => String(p.type) === requestedKind) : null);
+
+/* Not owned (a bought-nothing link, or a pet that doesn't exist): back to home. */
+if (!owned) window.location.replace("home.html");
+const ownedPet = owned || ownedPets[0] || STARTER;   // only used for the instant before the redirect
+
+const id = String(ownedPet.type);                            // which kind: picks animations and stats
+const pet = { ...PETS[id], name: ownedPet.name || PETS[id].name };
+const STATE_KEY = "cloudpet_pet_state_" + ownedPet.uid;      // stats are saved per pet, so two Embers stay separate
 
 /* Merge with defaults so old/partial saves can't produce missing or unknown stats */
 const state = { ...pet.stats };
@@ -568,14 +611,92 @@ for (const k in state) {
 
 let currentAnimation = "idle";
 
+/* =====================================================
+   Accessories + themes (same rules as js/state.js; this page reads the same saved data)
+   ===================================================== */
+const ACCESSORIES = {
+  "Cute Hat": { icon: "🎩", happiness: 10 },
+  "Pink Bow": { icon: "🎀", happiness: 8 }
+};
+
+const THEME_VARS = {
+  "Garden Theme": { "--bg-deep": "#1b4332", "--bg-mid": "#2d6a4f", "--bg-light": "#95d5b2", "--card": "#eafaf0", "--card-soft": "#f3fcf6", "--ink": "#14392a", "--ink-soft": "#3f6b57", "--pink": "#ff8fab", "--purple": "#2e9e6b" },
+  "Ocean Theme":  { "--bg-deep": "#0b2545", "--bg-mid": "#13579b", "--bg-light": "#8ecae6", "--card": "#e7f3fb", "--card-soft": "#f1f8fd", "--ink": "#0d2b4a", "--ink-soft": "#46688a", "--pink": "#ff7aa8", "--purple": "#1d7fd1" },
+  "Sunset Theme": { "--bg-deep": "#4a1033", "--bg-mid": "#c2410c", "--bg-light": "#fbbf77", "--card": "#fdeee0", "--card-soft": "#fff6ec", "--ink": "#4a1f10", "--ink-soft": "#8a5a44", "--pink": "#ff5c8a", "--purple": "#d9480f" }
+};
+
+const inventoryNow = () => { const i = readJSON("cloudpet_inventory", []); return Array.isArray(i) ? i : []; };
+const countOwned = name => inventoryNow().filter(i => i.name === name).length;
+const equippedMap = () => { const e = readJSON("cloudpet_equipped", {}); return e && typeof e === "object" && !Array.isArray(e) ? e : {}; };
+const countWornByOthers = name => { const w = equippedMap(); return Object.keys(w).filter(u => w[u] === name && u !== String(ownedPet.uid)).length; };
+
+function wornAccessory() {
+  const name = equippedMap()[ownedPet.uid];
+  return ACCESSORIES[name] && countOwned(name) > 0 ? name : null;     // ignore one that is no longer owned
+}
+
+function applySavedTheme() {
+  const name = localStorage.getItem("cloudpet_theme");
+  if (!THEME_VARS[name] || countOwned(name) < 1) return;
+  Object.entries(THEME_VARS[name]).forEach(([k, v]) => document.documentElement.style.setProperty(k, v));
+}
+applySavedTheme();
+
+function setAccessory(name) {                                          // name = null takes it off
+  const worn = equippedMap();
+  if (name) worn[ownedPet.uid] = name; else delete worn[ownedPet.uid];
+  writeJSON("cloudpet_equipped", worn);
+  renderAccessories();
+  renderStats();
+}
+
+function renderAccessories() {
+  const current = wornAccessory();
+  const owned = [...new Set(inventoryNow().filter(i => ACCESSORIES[i.name]).map(i => i.name))];
+  const list = $("accList");
+  list.innerHTML = "";
+
+  owned.forEach(name => {
+    const b = document.createElement("button");
+    const isOn = name === current;
+    b.className = "acc-btn" + (isOn ? " on" : "");
+    const free = countOwned(name) - countWornByOthers(name) > 0;
+    b.textContent = isOn ? `${ACCESSORIES[name].icon} ${name} · Take off` : `${ACCESSORIES[name].icon} ${name}`;
+    b.disabled = !isOn && !free;
+    b.title = !isOn && !free ? "Another pet is wearing your only one" : "";
+    b.addEventListener("click", () => setAccessory(isOn ? null : name));
+    list.appendChild(b);
+  });
+
+  const badge = $("wearingBadge");
+  badge.textContent = current ? ACCESSORIES[current].icon : "";
+  badge.classList.toggle("show", !!current);
+
+  $("accNote").innerHTML = owned.length === 0
+    ? `${pet.name} has nothing to wear yet. <a href="shop.html">Visit the shop →</a>`
+    : current ? `${pet.name} is wearing ${ACCESSORIES[current].icon} ${current}: 😊 +${ACCESSORIES[current].happiness} happiness.`
+              : `Pick one for ${pet.name} to wear and get a happiness boost.`;
+}
+
 function saveState() {
   writeJSON(STATE_KEY, state);
   window.dispatchEvent(new Event("cloudpetStateUpdated"));
 }
 
+/* Counts what you do today for the Quests page (same data shape as js/state.js). */
 function completeQuest(name) {
-  setFlag("cloudpet_quest_" + name, "true");
+  setFlag("cloudpet_quest_" + name, "true");          // older flags, kept in case another page reads them
   setFlag("cloudpet_quest_date", getToday());
+
+  let data = readJSON("cloudpet_quests", null);
+  if (!data || typeof data !== "object") data = {};
+  if (data.date !== getToday()) {
+    data = { date: getToday(), counts: {}, claimed: {}, bonus: false, total: Number(data.total) || 0 };
+  }
+  data.counts = data.counts || {};
+  data.counts[name] = (Number(data.counts[name]) || 0) + 1;
+  data.total = (Number(data.total) || 0) + 1;
+  writeJSON("cloudpet_quests", data);
 }
 
 /* =====================================================
@@ -770,11 +891,16 @@ function renderHeader() {
     .join("");
 }
 
+function shownStat(k) {                          // what the bars display (accessory boost included)
+  const worn = wornAccessory();
+  return k === "happiness" && worn ? clamp(state.happiness + ACCESSORIES[worn].happiness) : state[k];
+}
+
 function renderStats() {
   $("stats").innerHTML = Object.keys(state)
-    .map(k => barHTML(`${STAT_ICONS[k]} ${k[0].toUpperCase() + k.slice(1)}`, Math.round(state[k]), "stat"))
+    .map(k => barHTML(`${STAT_ICONS[k]} ${k[0].toUpperCase() + k.slice(1)}`, Math.round(shownStat(k)), "stat"))
     .join("");
-  const h = state.happiness;
+  const h = shownStat("happiness");
   $("mood").textContent = h >= 75 ? "😊 Happy" : h >= 45 ? "😐 Okay" : "🥺 Needs attention";
 }
 
@@ -816,7 +942,7 @@ function act(type) {
   applyEffects(EFFECTS[type]);
   saveState();
 
-  if (type === "play") completeQuest("play");
+  completeQuest(type);                      // "play" or "sleep"
   if (pet.discovery) setFlag("cloudpet_discovery_" + pet.discovery, "true");
 
   showAnimation(type, type !== "sleep");   // sleeping stays until the next action
@@ -987,6 +1113,7 @@ document.querySelectorAll("[data-action]").forEach(btn =>
 
 renderHeader();
 renderStats();
+renderAccessories();
 renderCoins();
 preloadAnimations();
 scheduleBlink();

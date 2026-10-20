@@ -6,326 +6,81 @@
 <title>Pet Haven — Home</title>
 <style>
   :root {
-    --bg-deep: #2c1250;
-    --bg-mid: #6a2f8f;
-    --bg-light: #d68ecb;
-    --card: #f2e6fb;
-    --card-soft: #f8effc;
-    --ink: #3a1a5c;
-    --ink-soft: #6b4a8f;
-    --pink: #ff6fa5;
-    --purple: #8c4fd6;
+    --bg-deep: #2c1250; --bg-mid: #6a2f8f; --bg-light: #d68ecb;
+    --card: #f2e6fb; --card-soft: #f8effc;
+    --ink: #3a1a5c; --ink-soft: #6b4a8f;
+    --pink: #ff6fa5; --purple: #8c4fd6;
     --shadow: 0 12px 28px rgba(44, 18, 80, 0.35);
-    --radius-lg: 28px;
-    --radius-md: 20px;
-    --radius-sm: 14px;
+    --radius-lg: 28px; --radius-md: 20px; --radius-sm: 14px;
   }
-
   * { box-sizing: border-box; }
-
   html, body {
-    margin: 0;
-    padding: 0;
+    margin: 0; padding: 0;
     font-family: 'Nunito', 'Segoe UI', system-ui, sans-serif;
     background: linear-gradient(160deg, var(--bg-deep) 0%, var(--bg-mid) 45%, var(--bg-light) 100%);
-    background-attachment: fixed;
-    color: var(--ink);
-    min-height: 100vh;
+    background-attachment: fixed; color: var(--ink); min-height: 100vh;
   }
-
   a { text-decoration: none; color: inherit; }
 
   /* ---------- Navbar ---------- */
   .navbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 32px;
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-    position: sticky;
-    top: 0;
-    z-index: 20;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 32px; background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15); position: sticky; top: 0; z-index: 20;
   }
-
-  .nav-brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 800;
-    font-size: 1.2rem;
-    color: #fff;
-    letter-spacing: 0.2px;
-  }
-
-  .nav-links {
-    display: flex;
-    gap: 6px;
-    background: rgba(255, 255, 255, 0.1);
-    padding: 6px;
-    border-radius: 999px;
-  }
-
-  .nav-links a {
-    padding: 8px 18px;
-    border-radius: 999px;
-    color: rgba(255, 255, 255, 0.85);
-    font-weight: 700;
-    font-size: 0.92rem;
-    transition: background 0.2s ease, color 0.2s ease;
-  }
-
+  .nav-brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.2rem; color: #fff; letter-spacing: 0.2px; }
+  .nav-links { display: flex; gap: 6px; background: rgba(255, 255, 255, 0.1); padding: 6px; border-radius: 999px; }
+  .nav-links a { padding: 8px 18px; border-radius: 999px; color: rgba(255, 255, 255, 0.85); font-weight: 700; font-size: 0.92rem; transition: background 0.2s ease, color 0.2s ease; }
   .nav-links a:hover { background: rgba(255, 255, 255, 0.15); }
-
-  .nav-links a.active {
-    background: #fff;
-    color: var(--purple);
-  }
-
-  .nav-right {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
-
-  .coin-pill {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(255, 255, 255, 0.15);
-    padding: 8px 16px;
-    border-radius: 999px;
-    color: #fff;
-    font-weight: 800;
-    font-size: 0.9rem;
-  }
-
-  .avatar {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--pink), var(--purple));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    font-weight: 800;
-    font-size: 1rem;
-    border: 2px solid rgba(255, 255, 255, 0.6);
-  }
-
-  .logout-link {
-    color: rgba(255, 255, 255, 0.75);
-    font-weight: 700;
-    font-size: 0.85rem;
-  }
+  .nav-links a.active { background: #fff; color: var(--purple); }
+  .nav-right { display: flex; align-items: center; gap: 14px; }
+  .coin-pill { display: flex; align-items: center; gap: 6px; background: rgba(255, 255, 255, 0.15); padding: 8px 16px; border-radius: 999px; color: #fff; font-weight: 800; font-size: 0.9rem; }
+  .avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, var(--pink), var(--purple)); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 1rem; border: 2px solid rgba(255, 255, 255, 0.6); }
+  .logout-link { color: rgba(255, 255, 255, 0.75); font-weight: 700; font-size: 0.85rem; }
 
   /* ---------- Main ---------- */
-  .main {
-    max-width: 1080px;
-    margin: 0 auto;
-    padding: 36px 28px 64px;
-  }
+  .main { max-width: 1080px; margin: 0 auto; padding: 36px 28px 64px; }
+  .greeting h1 { color: #fff; font-size: 1.8rem; margin: 0 0 4px; }
+  .greeting p { color: rgba(255, 255, 255, 0.8); margin: 0 0 28px; font-size: 1rem; }
+  .top-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 36px; }
+  .card { background: var(--card); border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 22px 24px; }
 
-  .greeting h1 {
-    color: #fff;
-    font-size: 1.8rem;
-    margin: 0 0 4px;
-  }
+  .weather-card { display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, var(--card-soft), var(--card)); }
+  .weather-icon { font-size: 3rem; line-height: 1; }
+  .weather-info h2 { margin: 0 0 2px; font-size: 1.6rem; }
+  .weather-info .temp { font-size: 1rem; color: var(--ink-soft); font-weight: 700; }
+  .weather-note { margin-top: 8px; font-size: 0.85rem; color: var(--ink-soft); max-width: 190px; text-align: right; }
 
-  .greeting p {
-    color: rgba(255, 255, 255, 0.8);
-    margin: 0 0 28px;
-    font-size: 1rem;
-  }
-
-  .top-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    margin-bottom: 36px;
-  }
-
-  .card {
-    background: var(--card);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow);
-    padding: 22px 24px;
-  }
-
-  /* Weather card */
-  .weather-card {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: linear-gradient(135deg, var(--card-soft), var(--card));
-  }
-
-  .weather-icon {
-    font-size: 3rem;
-    line-height: 1;
-  }
-
-  .weather-info h2 {
-    margin: 0 0 2px;
-    font-size: 1.6rem;
-  }
-
-  .weather-info .temp {
-    font-size: 1rem;
-    color: var(--ink-soft);
-    font-weight: 700;
-  }
-
-  .weather-note {
-    margin-top: 8px;
-    font-size: 0.85rem;
-    color: var(--ink-soft);
-    max-width: 190px;
-    text-align: right;
-  }
-
-  /* Coins/Quest card */
-  .quest-card .quest-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-  }
-
-  .quest-coins {
-    font-size: 1.25rem;
-    font-weight: 800;
-  }
-
-  .quest-title {
-    font-weight: 800;
-    margin: 6px 0 4px;
-    font-size: 1rem;
-  }
-
-  .quest-desc {
-    color: var(--ink-soft);
-    font-size: 0.88rem;
-    margin-bottom: 12px;
-  }
-
-  .progress-track {
-    background: #e6d3f5;
-    border-radius: 999px;
-    height: 10px;
-    overflow: hidden;
-    margin-bottom: 14px;
-  }
-
-  .progress-fill {
-    height: 100%;
-    width: 50%;
-    background: linear-gradient(90deg, var(--pink), var(--purple));
-    border-radius: 999px;
-  }
-
-  .quest-btn {
-    display: inline-block;
-    background: var(--purple);
-    color: #fff;
-    font-weight: 700;
-    font-size: 0.85rem;
-    padding: 9px 18px;
-    border-radius: 999px;
-    transition: transform 0.15s ease, background 0.2s ease;
-  }
-
-  .quest-btn:hover {
-    background: var(--pink);
-    transform: translateY(-1px);
-  }
+  .quest-card .quest-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .quest-coins { font-size: 1.25rem; font-weight: 800; }
+  .quest-title { font-weight: 800; margin: 6px 0 4px; font-size: 1rem; }
+  .quest-desc { color: var(--ink-soft); font-size: 0.88rem; margin-bottom: 12px; }
+  .progress-track { background: #e6d3f5; border-radius: 999px; height: 10px; overflow: hidden; margin-bottom: 14px; }
+  .progress-fill { height: 100%; width: 50%; background: linear-gradient(90deg, var(--pink), var(--purple)); border-radius: 999px; }
+  .quest-btn { display: inline-block; background: var(--purple); color: #fff; font-weight: 700; font-size: 0.85rem; padding: 9px 18px; border-radius: 999px; transition: transform 0.15s ease, background 0.2s ease; }
+  .quest-btn:hover { background: var(--pink); transform: translateY(-1px); }
 
   /* Pets section */
-  .section-title {
-    color: #fff;
-    font-size: 1.25rem;
-    margin: 0 0 18px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .pet-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 18px;
-  }
-
-  .pet-card {
-    background: var(--card);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow);
-    padding: 18px;
-    text-align: center;
-    transition: transform 0.18s ease, box-shadow 0.18s ease;
-    cursor: pointer;
-  }
-
-  .pet-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 16px 32px rgba(44, 18, 80, 0.42);
-  }
-
-  .pet-avatar {
-    width: 78px;
-    height: 78px;
-    margin: 0 auto 10px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2.2rem;
-    background: linear-gradient(135deg, #ffd6ec, #d9b8fb);
-  }
-
-  .pet-name {
-    font-weight: 800;
-    font-size: 1.05rem;
-    margin-bottom: 2px;
-  }
-
-  .pet-breed {
-    color: var(--ink-soft);
-    font-size: 0.82rem;
-    margin-bottom: 12px;
-  }
-
-  .pet-stats {
-    display: flex;
-    justify-content: center;
-    gap: 14px;
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: var(--ink);
-    margin-bottom: 14px;
-  }
-
+  .section-title { color: #fff; font-size: 1.25rem; margin: 0 0 18px; display: flex; align-items: center; gap: 8px; }
+  .pet-count { font-size: 0.85rem; font-weight: 800; background: rgba(255, 255, 255, 0.18); padding: 4px 12px; border-radius: 999px; }
+  .pet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .pet-card { background: var(--card); border-radius: var(--radius-md); box-shadow: var(--shadow); padding: 18px; text-align: center; transition: transform 0.18s ease, box-shadow 0.18s ease; cursor: pointer; }
+  .pet-card:hover { transform: translateY(-4px); box-shadow: 0 16px 32px rgba(44, 18, 80, 0.42); }
+  .pet-avatar { width: 78px; height: 78px; margin: 0 auto 10px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; background: linear-gradient(135deg, #ffd6ec, #d9b8fb); }
+  .pet-name { font-weight: 800; font-size: 1.05rem; margin-bottom: 2px; }
+  .pet-breed { color: var(--ink-soft); font-size: 0.82rem; margin-bottom: 12px; }
+  .pet-stats { display: flex; justify-content: center; gap: 14px; font-size: 0.82rem; font-weight: 700; color: var(--ink); margin-bottom: 14px; }
   .pet-stats span { white-space: nowrap; }
+  .view-pet { display: inline-block; font-size: 0.82rem; font-weight: 800; color: var(--purple); border: 2px solid var(--purple); border-radius: 999px; padding: 6px 16px; transition: background 0.2s ease, color 0.2s ease; }
+  .pet-card:hover .view-pet { background: var(--purple); color: #fff; }
 
-  .view-pet {
-    display: inline-block;
-    font-size: 0.82rem;
-    font-weight: 800;
-    color: var(--purple);
-    border: 2px solid var(--purple);
-    border-radius: 999px;
-    padding: 6px 16px;
-    transition: background 0.2s ease, color 0.2s ease;
-  }
+  /* "Adopt another" slot */
+  .pet-card.adopt { background: rgba(255, 255, 255, 0.12); box-shadow: none; border: 2px dashed rgba(255, 255, 255, 0.55); color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 230px; }
+  .pet-card.adopt:hover { background: rgba(255, 255, 255, 0.2); }
+  .adopt-plus { font-size: 2.6rem; line-height: 1; margin-bottom: 8px; }
+  .adopt-title { font-weight: 800; }
+  .adopt-sub { font-size: 0.82rem; opacity: 0.85; margin-top: 4px; }
 
-  .pet-card:hover .view-pet {
-    background: var(--purple);
-    color: #fff;
-  }
-
-  /* Responsive */
   @media (max-width: 760px) {
     .navbar { flex-wrap: wrap; gap: 12px; padding: 14px 18px; }
     .nav-links { order: 3; width: 100%; justify-content: center; }
@@ -333,20 +88,12 @@
     .pet-grid { grid-template-columns: repeat(2, 1fr); }
     .weather-note { display: none; }
   }
-
   @media (max-width: 480px) {
     .pet-grid { grid-template-columns: 1fr 1fr; }
     .main { padding: 24px 16px 48px; }
   }
-
-  @media (prefers-reduced-motion: reduce) {
-    .pet-card, .quest-btn { transition: none; }
-  }
-
-  a:focus-visible, .pet-card:focus-visible {
-    outline: 3px solid #fff;
-    outline-offset: 2px;
-  }
+  @media (prefers-reduced-motion: reduce) { .pet-card, .quest-btn { transition: none; } }
+  a:focus-visible, .pet-card:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 </style>
 </head>
 <body>
@@ -354,14 +101,14 @@
   <nav class="navbar">
     <div class="nav-brand">🐾 Pet Haven</div>
     <div class="nav-links">
-    <a href="home.html" class="active">Home</a>
-    <a href="ai-chat.html">AI Chat</a>
-    <a href="shop.html">Shop</a>
-    <a href="coins.html">Coins</a>
-    <a href="profile.html">Profile</a>
-  </div>
+      <a href="home.html" class="active">Home</a>
+      <a href="ai-chat.html">AI Chat</a>
+      <a href="shop.html">Shop</a>
+      <a href="coins.html">Coins</a>
+      <a href="profile.html">Profile</a>
+    </div>
     <div class="nav-right">
-      <div class="coin-pill" id="homeCoins">🪙 250</div>
+      <div class="coin-pill" id="navCoins">🪙 250</div>
       <div class="avatar">L</div>
       <a href="login.html" class="logout-link">Logout</a>
     </div>
@@ -386,156 +133,102 @@
       </div>
 
       <div class="card quest-card">
-  <div class="quest-header">
-    <div class="quest-coins">🪙 Daily Coins</div>
-  </div>
-
-  <div class="quest-title">Today's Quests</div>
-
-  <div class="quest-desc" id="homeQuestProgress">
-    Complete your pet activities to earn coins!
-  </div>
-
-  <div class="progress-track">
-    <div class="progress-fill" id="homeQuestProgressBar"></div>
-  </div>
-
-  <a href="coins.html" class="quest-btn">View Coins →</a>
-</div>
+        <div class="quest-header">
+          <div class="quest-coins" id="questCoins">🪙 250 Coins</div>
+        </div>
+        <div class="quest-title">Today's Quest</div>
+        <div class="quest-desc" id="questDesc">Daily quests</div>
+        <div class="progress-track"><div class="progress-fill" id="questFill"></div></div>
+        <a href="quests.html" class="quest-btn">View Quests</a>
+      </div>
     </div>
 
-    <h2 class="section-title">My Pets 🐾</h2>
-    <div class="pet-grid">
-
-      <a class="pet-card" href="pet.html?id=1" tabindex="0">
-        <div class="pet-avatar">🐱</div>
-        <div class="pet-name">Luna</div>
-        <div class="pet-breed">Persian Cat</div>
-        <div class="pet-stats">
-          <span id="pet1Health">❤️ 85</span>
-          <span id="pet1Hunger">🍖 72</span>
-        </div>
-        <span class="view-pet">View Pet →</span>
-      </a>
-
-      <a class="pet-card" href="pet.html?id=2" tabindex="0">
-        <div class="pet-avatar">🐶</div>
-        <div class="pet-name">Biscuit</div>
-        <div class="pet-breed">Corgi</div>
-        <div class="pet-stats">
-          <span id="pet2Health">❤️ 95</span>
-          <span id="pet2Hunger">🍖 60</span>
-        </div>
-        <span class="view-pet">View Pet →</span>
-      </a>
-
-      <a class="pet-card" href="pet.html?id=3" tabindex="0">
-        <div class="pet-avatar">🐰</div>
-        <div class="pet-name">Clover</div>
-        <div class="pet-breed">Holland Lop</div>
-        <div class="pet-stats">
-          <span id="pet3Health">❤️ 72</span>
-          <span id="pet3Hunger">🍖 88</span>
-        </div>
-        <span class="view-pet">View Pet →</span>
-      </a>
-
-      <a class="pet-card" href="pet.html?id=4" tabindex="0">
-        <div class="pet-avatar">🦊</div>
-        <div class="pet-name">Ember</div>
-        <div class="pet-breed">Fennec Fox</div>
-        <div class="pet-stats">
-          <span id="pet4Health">❤️ 64</span>
-          <span id="pet4Hunger">🍖 55</span>
-        </div>
-        <span class="view-pet">View Pet →</span>
-      </a>
-
-      <a class="pet-card" href="pet.html?id=5" tabindex="0">
-        <div class="pet-avatar">🐹</div>
-        <div class="pet-name">Waffle</div>
-        <div class="pet-breed">Hamster</div>
-        <div class="pet-stats">
-          <span id="pet5Health">❤️ 91</span>
-          <span id="pet5Hunger">🍖 80</span>
-        </div>
-        <span class="view-pet">View Pet →</span>
-      </a>
-
-      <a class="pet-card" href="pet.html?id=6" tabindex="0">
-        <div class="pet-avatar">🐢</div>
-        <div class="pet-name">Shelly</div>
-        <div class="pet-breed">Box Turtle</div>
-        <div class="pet-stats">
-          <span id="pet6Health">❤️ 78</span>
-          <span id="pet6Hunger">🍖 90</span>
-        </div>
-        <span class="view-pet">View Pet →</span>
-      </a>
-
-    </div>
+    <h2 class="section-title">My Pets 🐾 <span class="pet-count" id="petCount"></span></h2>
+    <div class="pet-grid" id="petGrid"></div>
   </main>
-<script src="js/state.js"></script>
 
-<script>
-  document.getElementById("homeCoins").textContent =
-    "🪙 " + getCoins();
-  function updateHomeQuest() {
+  <script src="js/state.js"></script>
+  <script>
+    // Default starting stats for a pet that hasn't been opened yet (the pet page saves real ones).
+    const DEFAULT_HOME_STATS = { health: 85, hunger: 70 };
 
-  const today = new Date();
-
-  const todayKey =
-    today.getFullYear() + "-" +
-    String(today.getMonth() + 1).padStart(2, "0") + "-" +
-    String(today.getDate()).padStart(2, "0");
-
-  const questDate = localStorage.getItem("cloudpet_quest_date");
-
-  let completed = 0;
-
-  if (questDate === todayKey) {
-
-    if (localStorage.getItem("cloudpet_quest_feed") === "true") {
-      completed++;
+    function savedStats(uid) {
+      try {
+        const s = JSON.parse(localStorage.getItem("cloudpet_pet_state_" + uid));
+        return {
+          health: typeof s.health === "number" ? s.health : DEFAULT_HOME_STATS.health,
+          hunger: typeof s.hunger === "number" ? s.hunger : DEFAULT_HOME_STATS.hunger
+        };
+      } catch (e) {
+        return DEFAULT_HOME_STATS;
+      }
     }
 
-    if (localStorage.getItem("cloudpet_quest_play") === "true") {
-      completed++;
+    function renderHome() {
+      const coins = getCoins();
+      document.getElementById("navCoins").textContent = "🪙 " + coins;
+      document.getElementById("questCoins").textContent = "🪙 " + coins + " Coins";
+
+      const q = dailyQuestSummary();
+      document.getElementById("questDesc").textContent =
+        q.done + " / " + q.total + " daily quests done" + (q.claimed < q.done ? " · rewards ready!" : "");
+      document.getElementById("questFill").style.width = (q.done / q.total * 100) + "%";
+
+      const pets = getOwnedPets();
+      document.getElementById("petCount").textContent = pets.length + " / " + MAX_PETS;
+
+      const grid = document.getElementById("petGrid");
+      grid.innerHTML = "";
+
+      pets.forEach(p => {
+        const kind = PET_CATALOG[p.type];
+        const stats = savedStats(p.uid);
+        const card = document.createElement("a");
+        card.className = "pet-card";
+        card.href = "pet.html?pet=" + encodeURIComponent(p.uid);
+        card.tabIndex = 0;
+
+        const avatar = document.createElement("div");
+        avatar.className = "pet-avatar";
+        avatar.textContent = kind.emoji;
+
+        const name = document.createElement("div");
+        name.className = "pet-name";
+        name.textContent = p.name;
+
+        const breed = document.createElement("div");
+        breed.className = "pet-breed";
+        breed.textContent = kind.species;
+
+        const statRow = document.createElement("div");
+        statRow.className = "pet-stats";
+        statRow.innerHTML = "<span>❤️ " + Math.round(stats.health) + "</span><span>🍖 " + Math.round(stats.hunger) + "</span>";
+
+        const view = document.createElement("span");
+        view.className = "view-pet";
+        view.textContent = "View Pet →";
+
+        card.append(avatar, name, breed, statRow, view);
+        grid.appendChild(card);
+      });
+
+      if (pets.length < MAX_PETS) {
+        const adopt = document.createElement("a");
+        adopt.className = "pet-card adopt";
+        adopt.href = "shop.html";
+        adopt.innerHTML =
+          '<div class="adopt-plus">＋</div>' +
+          '<div class="adopt-title">Adopt another pet</div>' +
+          '<div class="adopt-sub">Visit the shop · ' + (MAX_PETS - pets.length) + ' space' + (MAX_PETS - pets.length === 1 ? "" : "s") + ' left</div>';
+        grid.appendChild(adopt);
+      }
     }
 
-    if (localStorage.getItem("cloudpet_quest_clean") === "true") {
-      completed++;
-    }
-  }
+    renderHome();
+    window.addEventListener("pageshow", renderHome);   // coming back from the shop shows the new pet
+  </script>
 
-  document.getElementById("homeQuestProgress").textContent =
-    completed + " / 3 daily quests completed";
-
-  document.getElementById("homeQuestProgressBar").style.width =
-    (completed / 3 * 100) + "%";
-}
-
-updateHomeQuest();
-function updatePetCards() {
-
-  for (let id = 1; id <= 6; id++) {
-
-    const savedState =
-      localStorage.getItem("cloudpet_pet_state_" + id);
-
-    if (!savedState) continue;
-
-    const state = JSON.parse(savedState);
-
-    document.getElementById("pet" + id + "Health").textContent =
-      "❤️ " + Math.round(state.health);
-
-    document.getElementById("pet" + id + "Hunger").textContent =
-      "🍖 " + Math.round(state.hunger);
-  }
-}
-
-updatePetCards();
-</script>
 </body>
 </html>
+
+//localStorage.setItem("cloudpet_coins", 250); location.reload();

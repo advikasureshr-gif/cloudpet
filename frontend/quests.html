@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CloudPet - Quests</title>
+
+  <style>
+    :root {
+      --bg-deep: #2c1250; --bg-mid: #6a2f8f; --bg-light: #d68ecb;
+      --card: #f2e6fb; --card-soft: #f8effc;
+      --ink: #3a1a5c; --ink-soft: #6b4a8f;
+      --pink: #ff6fa5; --purple: #8c4fd6;
+      /* Tints are derived from the theme colours, so they follow the active theme */
+      --tint: color-mix(in srgb, var(--purple) 16%, white);
+      --line: color-mix(in srgb, var(--purple) 14%, white);
+      --shadow: 0 12px 28px rgba(44, 18, 80, 0.35);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      color: var(--ink);
+      background: linear-gradient(160deg, var(--bg-deep) 0%, var(--bg-mid) 45%, var(--bg-light) 100%);
+      background-attachment: fixed;
+      padding-bottom: 50px;
+    }
+
+    a { text-decoration: none; color: inherit; }
+
+    /* ---------- Navbar (same on every page) ---------- */
+    .navbar {
+      display: flex; align-items: center; justify-content: space-between; gap: 18px;
+      padding: 16px 32px;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      position: sticky; top: 0; z-index: 20;
+    }
+    .nav-brand { font-size: 1.2rem; font-weight: 800; color: #fff; }
+    .nav-links { display: flex; align-items: center; gap: 6px; padding: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.1); }
+    .nav-links a { padding: 8px 18px; border-radius: 999px; color: rgba(255, 255, 255, 0.85); font-weight: 700; font-size: 0.92rem; transition: background 0.2s, color 0.2s; }
+    .nav-links a:hover { background: rgba(255, 255, 255, 0.15); }
+    .nav-links a.active { background: #fff; color: var(--purple); }
+    .nav-right { display: flex; align-items: center; gap: 14px; }
+    .coin-pill { padding: 8px 16px; border-radius: 999px; background: rgba(255, 255, 255, 0.15); color: #fff; font-weight: 800; font-size: 0.9rem; white-space: nowrap; }
+    .avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, var(--pink), var(--purple)); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; border: 2px solid rgba(255, 255, 255, 0.6); }
+    .logout-link { color: rgba(255, 255, 255, 0.75); font-weight: 700; font-size: 0.85rem; }
+
+    /* ---------- Page ---------- */
+    main { width: min(1050px, 92%); margin: 40px auto; }
+    .page-title { color: #fff; font-size: 2.2rem; margin-bottom: 8px; }
+    .page-subtitle { color: rgba(255, 255, 255, 0.78); margin-bottom: 28px; }
+    .section-title { color: #fff; font-size: 1.25rem; margin: 34px 0 16px; display: flex; align-items: center; gap: 10px; }
+    .section-title small { font-size: 0.82rem; font-weight: 700; color: rgba(255, 255, 255, 0.8); }
+
+    /* ---------- Daily quests ---------- */
+    .quest-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+    .quest-card { background: var(--card); border-radius: 24px; padding: 22px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 12px; }
+    .quest-top { display: flex; align-items: center; gap: 14px; }
+    .quest-icon { width: 54px; height: 54px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.7rem; background: linear-gradient(135deg, var(--pink), var(--purple)); }
+    .quest-title { font-weight: 800; font-size: 1.05rem; }
+    .quest-desc { color: var(--ink-soft); font-size: 0.88rem; }
+    .quest-reward { margin-left: auto; font-weight: 800; white-space: nowrap; }
+    .progress-row { display: flex; align-items: center; gap: 12px; }
+    .progress-track { flex: 1; height: 10px; border-radius: 999px; overflow: hidden; background: var(--line); }
+    .progress-fill { height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, var(--pink), var(--purple)); transition: width 0.4s ease; }
+    .progress-text { font-weight: 800; font-size: 0.85rem; min-width: 38px; text-align: right; }
+
+    .claim-btn { border: none; border-radius: 999px; padding: 10px 18px; background: var(--purple); color: #fff; font: inherit; font-weight: 800; cursor: pointer; transition: background 0.2s, transform 0.2s; }
+    .claim-btn:hover:not(:disabled) { background: var(--pink); transform: translateY(-1px); }
+    .claim-btn:disabled { background: var(--line); color: var(--ink-soft); cursor: default; }
+    .claim-btn.ready { animation: pulse 1.6s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); } 50% { box-shadow: 0 0 0 6px rgba(140, 79, 214, 0.25); } }
+    .quest-card.claimed { opacity: 0.75; }
+
+    .bonus-card { margin-top: 18px; background: rgba(255, 255, 255, 0.14); color: #fff; border-radius: 20px; padding: 16px 20px; font-weight: 700; display: flex; align-items: center; gap: 12px; }
+    .bonus-card.done { background: rgba(255, 255, 255, 0.28); }
+
+    /* ---------- Achievements ---------- */
+    .achievement-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .achievement { background: var(--card); border-radius: 22px; padding: 20px 16px; text-align: center; box-shadow: 0 10px 24px rgba(44, 18, 80, 0.25); }
+    .achievement-icon { font-size: 2.2rem; margin-bottom: 8px; }
+    .achievement-title { font-weight: 800; }
+    .achievement-desc { color: var(--ink-soft); font-size: 0.82rem; margin-top: 4px; }
+    .achievement-status { display: inline-block; margin-top: 10px; font-size: 0.78rem; font-weight: 800; padding: 4px 10px; border-radius: 999px; background: var(--line); color: var(--ink-soft); }
+    .achievement.unlocked .achievement-status { background: var(--purple); color: #fff; }
+    .achievement.locked .achievement-icon { filter: grayscale(1); opacity: 0.55; }
+
+    /* ---------- Notification ---------- */
+    .notification { position: fixed; top: 90px; right: 30px; background: var(--card); color: var(--ink); padding: 14px 20px; border-radius: 16px; box-shadow: var(--shadow); display: none; align-items: center; gap: 10px; font-weight: 800; z-index: 200; }
+
+    @media (max-width: 850px) {
+      .navbar { flex-wrap: wrap; padding: 14px 18px; }
+      .nav-links { order: 3; width: 100%; overflow-x: auto; justify-content: center; }
+      .nav-links a { padding: 9px 12px; white-space: nowrap; }
+      .nav-right { margin-left: auto; }
+      .quest-grid { grid-template-columns: 1fr; }
+      .achievement-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav class="navbar">
+    <a href="home.html" class="nav-brand">🐾 Pet Haven</a>
+
+    <div class="nav-links">
+      <a href="home.html">Home</a>
+      <a href="ai-chat.html">AI Chat</a>
+      <a href="shop.html">Shop</a>
+      <a href="coins.html">Coins</a>
+      <a href="profile.html">Profile</a>
+    </div>
+
+    <div class="nav-right">
+      <div class="coin-pill" id="coinDisplay">🪙 0</div>
+      <div class="avatar">L</div>
+      <a href="login.html" class="logout-link">Logout</a>
+    </div>
+  </nav>
+
+  <main>
+
+    <h1 class="page-title">Quests 🎯</h1>
+    <p class="page-subtitle">Care for your pets to finish quests and earn coins.</p>
+
+    <h2 class="section-title">Today's Quests <small>Resets every day</small></h2>
+    <div class="quest-grid" id="questGrid"></div>
+    <div class="bonus-card" id="bonusCard"></div>
+
+    <h2 class="section-title">Achievements 🏆 <small id="achievementCount"></small></h2>
+    <div class="achievement-grid" id="achievementGrid"></div>
+
+  </main>
+
+  <div class="notification" id="notification" role="status">
+    <span id="notificationIcon">🎉</span>
+    <span id="notificationText"></span>
+  </div>
+
+  <script src="js/state.js"></script>
+  <script>
+    const $ = id => document.getElementById(id);
+
+    function notify(message, icon) {
+      $("notificationIcon").textContent = icon;
+      $("notificationText").textContent = message;
+      $("notification").style.display = "flex";
+      clearTimeout(notify.timer);
+      notify.timer = setTimeout(() => { $("notification").style.display = "none"; }, 2600);
+    }
+
+    function showNavbar() {
+      $("coinDisplay").textContent = "🪙 " + getCoins();
+
+      try {
+        const profile = JSON.parse(localStorage.getItem("cloudpet_profile"));
+        if (profile && profile.avatar) {
+          document.querySelectorAll(".avatar").forEach(el => { el.textContent = profile.avatar; });
+        }
+      } catch (error) { /* keep the default letter */ }
+    }
+
+    function renderQuests() {
+      const grid = $("questGrid");
+      grid.innerHTML = "";
+
+      DAILY_QUESTS.forEach(quest => {
+        const progress = questProgress(quest);
+        const complete = isQuestComplete(quest);
+        const claimed = isQuestClaimed(quest);
+
+        const card = document.createElement("div");
+        card.className = "quest-card" + (claimed ? " claimed" : "");
+
+        const top = document.createElement("div");
+        top.className = "quest-top";
+
+        const icon = document.createElement("div");
+        icon.className = "quest-icon";
+        icon.textContent = quest.icon;
+
+        const text = document.createElement("div");
+        const title = document.createElement("div");
+        title.className = "quest-title";
+        title.textContent = quest.title;
+        const desc = document.createElement("div");
+        desc.className = "quest-desc";
+        desc.textContent = quest.desc;
+        text.append(title, desc);
+
+        const reward = document.createElement("div");
+        reward.className = "quest-reward";
+        reward.textContent = "🪙 " + quest.reward;
+
+        top.append(icon, text, reward);
+
+        const row = document.createElement("div");
+        row.className = "progress-row";
+        row.innerHTML = '<div class="progress-track"><div class="progress-fill"></div></div><div class="progress-text"></div>';
+        row.querySelector(".progress-fill").style.width = (progress / quest.goal * 100) + "%";
+        row.querySelector(".progress-text").textContent = progress + " / " + quest.goal;
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "claim-btn" + (complete && !claimed ? " ready" : "");
+        button.disabled = !complete || claimed;
+        button.textContent = claimed ? "Claimed ✓" : complete ? "Claim 🪙 " + quest.reward : "In progress";
+        button.addEventListener("click", () => {
+          const earned = claimQuest(quest.id);
+          if (earned) {
+            const bonus = earned - quest.reward;
+            notify("+" + earned + " coins" + (bonus ? " (includes the +" + bonus + " all-quests bonus!)" : "") + "!", "🪙");
+          }
+          renderAll();
+        });
+
+        card.append(top, row, button);
+        grid.appendChild(card);
+      });
+
+      const data = getQuestData();
+      const left = DAILY_QUESTS.filter(q => !data.claimed[q.id]).length;
+      const bonus = $("bonusCard");
+      bonus.className = "bonus-card" + (data.bonus ? " done" : "");
+      bonus.textContent = data.bonus
+        ? "🎉 All quests claimed today. Bonus +" + QUEST_BONUS + " coins collected!"
+        : "⭐ Claim all " + DAILY_QUESTS.length + " quests today for a bonus of 🪙 " + QUEST_BONUS + " (" + left + " to go).";
+    }
+
+    function renderAchievements() {
+      checkAchievements();
+
+      const grid = $("achievementGrid");
+      grid.innerHTML = "";
+      let unlockedCount = 0;
+
+      ACHIEVEMENTS.forEach(a => {
+        const unlocked = localStorage.getItem(a.key) === "true";
+        if (unlocked) unlockedCount++;
+
+        const card = document.createElement("div");
+        card.className = "achievement " + (unlocked ? "unlocked" : "locked");
+
+        const icon = document.createElement("div");
+        icon.className = "achievement-icon";
+        icon.textContent = a.icon;
+        const title = document.createElement("div");
+        title.className = "achievement-title";
+        title.textContent = a.title;
+        const desc = document.createElement("div");
+        desc.className = "achievement-desc";
+        desc.textContent = a.desc;
+        const status = document.createElement("span");
+        status.className = "achievement-status";
+        status.textContent = unlocked ? "Unlocked ✓" : "Locked";
+
+        card.append(icon, title, desc, status);
+        grid.appendChild(card);
+      });
+
+      $("achievementCount").textContent = unlockedCount + " / " + ACHIEVEMENTS.length + " unlocked";
+    }
+
+    function renderAll() {
+      showNavbar();
+      renderQuests();
+      renderAchievements();
+    }
+
+    renderAll();
+    window.addEventListener("pageshow", renderAll);   // coming back from a pet page shows new progress
+  </script>
+
+</body>
+</html>
