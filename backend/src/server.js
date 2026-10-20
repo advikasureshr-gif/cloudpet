@@ -1,3 +1,4 @@
+import "./local-env.js";            // must stay first: sets the local defaults before the database is set up
 import { createApp } from "./app.js";
 import { ensureTable } from "./table.js";
 import { TABLE } from "./db.js";
