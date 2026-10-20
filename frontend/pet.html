@@ -117,6 +117,13 @@ main { width: min(1080px, 92%); margin: 30px auto; }
   overflow: hidden;
 }
 .visual img { width: 75%; height: 75%; object-fit: contain; image-rendering: pixelated; }
+.sprite-sheet { position: relative; overflow: hidden; height: min(256px, 90%); aspect-ratio: 5 / 4; max-width: 90%; }   /* one-frame window (80x64 frames) */
+.sprite-strip {
+  position: absolute; top: 0; left: 0; height: 100%;
+  width: calc(var(--frames, 1) * 100%);            /* the whole sheet: `frames` windows wide */
+  background-size: 100% 100%; background-repeat: no-repeat;
+  image-rendering: pixelated; will-change: transform;
+}
 .emoji-fallback { font-size: 9rem; line-height: 1; }
 h1 { font-size: 2rem; margin-top: 12px; }
 h2 { font-size: 1.15rem; margin: 20px 0 14px; }
@@ -202,6 +209,7 @@ h2 { font-size: 1.15rem; margin: 20px 0 14px; }
   place-items: center;
 }
 .cleanpet img { width: 82%; height: 82%; object-fit: contain; image-rendering: pixelated; }
+.cleanpet .sprite-sheet { height: min(160px, 82%); }
 .cleanpet .emoji-fallback { font-size: 6rem; }
 .soap {
   position: absolute;
@@ -284,6 +292,10 @@ h2 { font-size: 1.15rem; margin: 20px 0 14px; }
   z-index: 100;
 }
 .toast.show { transform: translate(-50%, 0); opacity: 1; }
+
+/* Slide the strip left by exactly its own width in `frames` equal steps:
+   every step is one whole frame, so the window never shows part of a neighbour. */
+@keyframes spriteStrip { from { transform: translateX(0); } to { transform: translateX(-100%); } }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 800px) {
@@ -412,7 +424,20 @@ const PETS = {
     traits: { "❤️ Affection": 85, "🎾 Playfulness": 60, "😼 Independence": 90 },
     stats: { health: 85, hunger: 72, happiness: 80, energy: 65, hygiene: 75 },
     msgs: { feed: "🐟 Luna enjoyed the treat!", play: "🧶 Luna chased the yarn!", sleep: "😴 Luna curled up for a nap!" },
-    anim: null
+    /* Luna uses PNG sprite sheets (64 x 64 per frame), not GIF files. */
+    spriteSheets: {
+      idle: { src: "../animation_packs/FREE_Cat 2D Pixel Art/FREE_Cat 2D Pixel Art/Sprites/IDLE.png", frames: 8, fps: 7 },
+      feed: { src: "../animation_packs/FREE_Cat 2D Pixel Art/FREE_Cat 2D Pixel Art/Sprites/IDLE.png", frames: 8, fps: 7 },
+      sitting: { src: "../animation_packs/FREE_Cat 2D Pixel Art/FREE_Cat 2D Pixel Art/Sprites/IDLE.png", frames: 8, fps: 7 },
+      sleep: { src: "../animation_packs/FREE_Cat 2D Pixel Art/FREE_Cat 2D Pixel Art/Sprites/IDLE.png", frames: 8, fps: 7 },
+      walk: { src: "../animation_packs/FREE_Cat 2D Pixel Art/FREE_Cat 2D Pixel Art/Sprites/WALK.png", frames: 12, fps: 10 },
+      run: { src: "../animation_packs/FREE_Cat 2D Pixel Art/FREE_Cat 2D Pixel Art/Sprites/RUN.png", frames: 8, fps: 12 },
+      jump: { src: "../animation_packs/FREE_Cat 2D Pixel Art/FREE_Cat 2D Pixel Art/Sprites/JUMP.png", frames: 3, fps: 8 },
+      runningJump: { src: "../animation_packs/FREE_Cat 2D Pixel Art/FREE_Cat 2D Pixel Art/Sprites/RUNNING JUMP.png", frames: 3, fps: 8 },
+      attack: { src: "../animation_packs/FREE_Cat 2D Pixel Art/FREE_Cat 2D Pixel Art/Sprites/ATTACK 1.png", frames: 8, fps: 10 },
+      hurt: { src: "../animation_packs/FREE_Cat 2D Pixel Art/FREE_Cat 2D Pixel Art/Sprites/HURT.png", frames: 4, fps: 8 }
+    },
+    sequences: { play: [["run", 850], ["jump", 500], ["run", 850]] }
   },
   2: {
     name: "Shadow", species: "German Shepherd", discovery: "dog", age: "1 year old", emoji: "🐕",
@@ -590,9 +615,51 @@ function scheduleLoop(src, ms) {
   }, ms);
 }
 
+/* Sprite sheets are one horizontal strip of square frames (64 x 64 each). */
+function makeSpriteSheet(kind, target) {
+  const sheet = pet.spriteSheets && pet.spriteSheets[kind];
+  if (!sheet) return false;
+
+  const el = document.createElement("div");
+  el.className = "sprite-sheet";
+  el.setAttribute("role", "img");
+  el.setAttribute("aria-label", `${pet.name} ${kind}`);
+
+  const strip = document.createElement("div");
+  strip.className = "sprite-strip";
+  strip.style.backgroundImage = `url("${sheet.src}")`;
+  el.appendChild(strip);
+  target.appendChild(el);
+
+  strip.style.setProperty("--frames", sheet.frames);
+  strip.style.animation = `spriteStrip ${sheet.frames / sheet.fps}s steps(${sheet.frames}) infinite`;
+
+  /* Frames in these sheets are 80 x 64, not square: size the window from the image itself
+     so each step shows exactly one whole frame. */
+  const probe = new Image();
+  probe.onload = () => {
+    const fw = probe.naturalWidth / sheet.frames;
+    el.style.aspectRatio = `${fw} / ${probe.naturalHeight}`;
+    if (!Number.isInteger(fw)) console.warn(`${sheet.src}: ${probe.naturalWidth}px is not divisible by ${sheet.frames} frames - check the frames value.`);
+  };
+  probe.src = sheet.src;
+  return true;
+}
+
 function setVisual(kind) {
   const box = $("visual");
+  const sprite = pet.spriteSheets && pet.spriteSheets[kind];
   const src = pet.anim && pet.anim[kind];
+
+  if (sprite) {
+    if (kind === currentKind && box.querySelector(".sprite-sheet")) return;   // already showing it
+    clearTimeout(loopTimer);
+    currentKind = kind;
+    petImg = null;
+    box.innerHTML = "";
+    makeSpriteSheet(kind, box);
+    return;
+  }
 
   if (!src) {
     clearTimeout(loopTimer);
@@ -829,13 +896,18 @@ let dragging = false, offsetX = 0, offsetY = 0, cleaned = false;
 let cleanLoopTimer = null;
 
 function cleanStart() {
-  const kind = pet.anim && pet.anim.sitting ? "sitting" : "idle";
+  const kind = (pet.spriteSheets && pet.spriteSheets.sitting) ? "sitting" : (pet.anim && pet.anim.sitting ? "sitting" : "idle");
   const src = pet.anim && pet.anim[kind];
-  cleanpet.innerHTML = src
-    ? `<img src="${src}" alt="${pet.name}">`
-    : `<div class="emoji-fallback">${pet.emoji}</div>`;
+  cleanpet.innerHTML = "";
+  if (pet.spriteSheets && pet.spriteSheets[kind]) {
+    makeSpriteSheet(kind, cleanpet);
+  } else if (src) {
+    cleanpet.innerHTML = `<img src="${src}" alt="${pet.name}">`;
+  } else {
+    cleanpet.innerHTML = `<div class="emoji-fallback">${pet.emoji}</div>`;
+  }
 
-  /* Same fix as the main view: restart the GIF before its empty last frame */
+  /* Restart GIF loops where needed; sprite sheets loop via CSS. */
   clearInterval(cleanLoopTimer);
   const loopMs = pet.animLoopMs && pet.animLoopMs[kind];
   const img = cleanpet.querySelector("img");
