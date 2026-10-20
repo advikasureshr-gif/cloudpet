@@ -144,7 +144,7 @@
     </div>
 
     <div class="nav-right">
-      <div class="coin-pill" id="coinDisplay">🪙 0</div>
+      <div class="coin-pill" id="coinDisplay">🪙 …</div>
       <div class="avatar">L</div>
       <a href="login.html" class="logout-link">Logout</a>
     </div>
@@ -215,29 +215,18 @@
   </main>
 
   <script src="js/state.js"></script>
+  <script src="js/api.js"></script>
   <script>
     const AVATARS = ["👩🏻", "👨🏻", "🐱", "🐈‍⬛", "🐶", "🐕", "🐰", "🌸"];
-    const DEFAULT_PROFILE = { name: "Pet Parent", email: "petparent@cloudpet.com", avatar: "👩🏻" };
-
     const $ = id => document.getElementById(id);
 
-    /* ---------- Saved profile ---------- */
-    function loadProfile() {
-      try {
-        const saved = JSON.parse(localStorage.getItem("cloudpet_profile"));
-        return { ...DEFAULT_PROFILE, ...(saved && typeof saved === "object" ? saved : {}) };
-      } catch (error) {
-        return { ...DEFAULT_PROFILE };
-      }
-    }
-
-    const profile = loadProfile();
-    let selectedAvatar = profile.avatar;
+    let profile = null;          // { name, email, avatar, coins, ... } from the server
+    let selectedAvatar = null;
 
     function showProfile() {
       $("profileName").textContent = profile.name;
       $("profileAvatar").textContent = profile.avatar;
-      document.querySelectorAll(".nav-right .avatar").forEach(el => { el.textContent = profile.avatar; });
+      $("coinStat").textContent = profile.coins;
     }
 
     /* ---------- Avatar picker ---------- */
@@ -262,6 +251,7 @@
 
     /* ---------- Edit / save / cancel ---------- */
     function openEditor() {
+      if (!profile) return;
       $("editName").value = profile.name;
       $("editEmail").value = profile.email;
       $("formError").textContent = "";
@@ -275,7 +265,7 @@
       $("editForm").classList.remove("open");
     }
 
-    function saveProfile() {
+    async function saveProfile() {
       const name = $("editName").value.trim();
       const email = $("editEmail").value.trim();
 
@@ -284,44 +274,30 @@
         return;
       }
 
-      profile.name = name;
-      profile.email = email;
-      profile.avatar = selectedAvatar;
-
-      localStorage.setItem("cloudpet_profile", JSON.stringify(profile));
-      showProfile();
-      closeEditor();
+      $("saveBtn").disabled = true;
+      try {
+        profile = await api.updateMe({ name, email, avatar: selectedAvatar });   // the server checks it too
+        showProfile();
+        closeEditor();
+      } catch (err) {
+        $("formError").textContent = err.message;
+      } finally {
+        $("saveBtn").disabled = false;
+      }
     }
 
     $("editBtn").addEventListener("click", openEditor);
     $("saveBtn").addEventListener("click", saveProfile);
     $("cancelBtn").addEventListener("click", closeEditor);
 
-    /* ---------- Stats, navbar coins and pets ---------- */
-    function showStats() {
-      checkAchievements();
-      const coins = getCoins();
-      $("coinDisplay").textContent = "🪙 " + coins;
-      $("coinStat").textContent = coins;
-      $("petStat").textContent = getOwnedPets().length;
-
-      const achievementKeys = [
-        "cloudpet_achievement_first_steps",
-        "cloudpet_achievement_pet_lover",
-        "cloudpet_achievement_super_owner",
-        "cloudpet_achievement_pet_haven_pro"
-      ];
-      $("achievementStat").textContent =
-        achievementKeys.filter(key => localStorage.getItem(key) === "true").length;
-    }
-
-    // Only the pets you own, each linking to its own page
-    function showPets() {
+    /* ---------- My pets ---------- */
+    function showPets(pets, kinds) {
       const list = $("petSummary");
       list.innerHTML = "";
 
-      getOwnedPets().forEach(p => {
-        const kind = PET_CATALOG[p.type];
+      pets.forEach(p => {
+        const kind = kinds[p.type];
+        if (!kind) return;
 
         const card = document.createElement("a");
         card.className = "pet-mini";
@@ -338,11 +314,24 @@
         card.append(icon, name, kind.species);
         list.appendChild(card);
       });
+
+      $("petStat").textContent = pets.length;
     }
 
-    showProfile();
-    showStats();
-    showPets();
+    async function load() {
+      try {
+        const [me, petData, catalog, quests] = await Promise.all([api.me(), api.pets(), api.catalog(), api.quests()]);
+        profile = me;
+        showProfile();
+        showPets(petData.pets, Object.fromEntries(catalog.pets.map(p => [p.type, p])));
+        $("achievementStat").textContent = quests.achievements.filter(a => a.unlocked).length;
+      } catch (err) {
+        api.showError(err);
+      }
+    }
+
+    load();
+    window.addEventListener("pageshow", e => { if (e.persisted) load(); });
   </script>
 
 </body>

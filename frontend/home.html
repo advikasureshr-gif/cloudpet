@@ -108,7 +108,7 @@
       <a href="profile.html">Profile</a>
     </div>
     <div class="nav-right">
-      <div class="coin-pill" id="navCoins">🪙 250</div>
+      <div class="coin-pill" id="navCoins">🪙 …</div>
       <div class="avatar">L</div>
       <a href="login.html" class="logout-link">Logout</a>
     </div>
@@ -116,7 +116,7 @@
 
   <main class="main">
     <div class="greeting">
-      <h1>Good morning, Lexie! 🌸</h1>
+      <h1>Good morning, <span id="greetingName">Lexie</span>! 🌸</h1>
       <p>Here's how your pets are doing today.</p>
     </div>
 
@@ -137,7 +137,7 @@
           <div class="quest-coins" id="questCoins">🪙 250 Coins</div>
         </div>
         <div class="quest-title">Today's Quest</div>
-        <div class="quest-desc" id="questDesc">Daily quests</div>
+        <div class="quest-desc" id="questDesc">Loading…</div>
         <div class="progress-track"><div class="progress-fill" id="questFill"></div></div>
         <a href="quests.html" class="quest-btn">View Quests</a>
       </div>
@@ -148,87 +148,82 @@
   </main>
 
   <script src="js/state.js"></script>
+  <script src="js/api.js"></script>
   <script>
-    // Default starting stats for a pet that hasn't been opened yet (the pet page saves real ones).
-    const DEFAULT_HOME_STATS = { health: 85, hunger: 70 };
-
-    function savedStats(uid) {
-      try {
-        const s = JSON.parse(localStorage.getItem("cloudpet_pet_state_" + uid));
-        return {
-          health: typeof s.health === "number" ? s.health : DEFAULT_HOME_STATS.health,
-          hunger: typeof s.hunger === "number" ? s.hunger : DEFAULT_HOME_STATS.hunger
-        };
-      } catch (e) {
-        return DEFAULT_HOME_STATS;
-      }
+    function statOf(pet, key, fallback) {
+      return pet.stats && typeof pet.stats[key] === "number" ? Math.round(pet.stats[key]) : fallback;
     }
 
-    function renderHome() {
-      const coins = getCoins();
-      document.getElementById("navCoins").textContent = "🪙 " + coins;
-      document.getElementById("questCoins").textContent = "🪙 " + coins + " Coins";
+    function petCard(pet, kind) {
+      const card = document.createElement("a");
+      card.className = "pet-card";
+      card.href = "pet.html?pet=" + encodeURIComponent(pet.uid);
+      card.tabIndex = 0;
 
-      const q = dailyQuestSummary();
-      document.getElementById("questDesc").textContent =
-        q.done + " / " + q.total + " daily quests done" + (q.claimed < q.done ? " · rewards ready!" : "");
-      document.getElementById("questFill").style.width = (q.done / q.total * 100) + "%";
+      const avatar = document.createElement("div");
+      avatar.className = "pet-avatar";
+      avatar.textContent = kind.emoji;
 
-      const pets = getOwnedPets();
-      document.getElementById("petCount").textContent = pets.length + " / " + MAX_PETS;
+      const name = document.createElement("div");
+      name.className = "pet-name";
+      name.textContent = pet.name;
 
-      const grid = document.getElementById("petGrid");
-      grid.innerHTML = "";
+      const breed = document.createElement("div");
+      breed.className = "pet-breed";
+      breed.textContent = kind.species;
 
-      pets.forEach(p => {
-        const kind = PET_CATALOG[p.type];
-        const stats = savedStats(p.uid);
-        const card = document.createElement("a");
-        card.className = "pet-card";
-        card.href = "pet.html?pet=" + encodeURIComponent(p.uid);
-        card.tabIndex = 0;
+      const stats = document.createElement("div");
+      stats.className = "pet-stats";
+      stats.innerHTML = "<span>❤️ " + statOf(pet, "health", 0) + "</span><span>🍖 " + statOf(pet, "hunger", 0) + "</span>";
 
-        const avatar = document.createElement("div");
-        avatar.className = "pet-avatar";
-        avatar.textContent = kind.emoji;
+      const view = document.createElement("span");
+      view.className = "view-pet";
+      view.textContent = "View Pet →";
 
-        const name = document.createElement("div");
-        name.className = "pet-name";
-        name.textContent = p.name;
+      card.append(avatar, name, breed, stats, view);
+      return card;
+    }
 
-        const breed = document.createElement("div");
-        breed.className = "pet-breed";
-        breed.textContent = kind.species;
+    async function renderHome() {
+      try {
+        const [me, petData, quests, catalog] = await Promise.all([api.me(), api.pets(), api.quests(), api.catalog()]);
 
-        const statRow = document.createElement("div");
-        statRow.className = "pet-stats";
-        statRow.innerHTML = "<span>❤️ " + Math.round(stats.health) + "</span><span>🍖 " + Math.round(stats.hunger) + "</span>";
+        document.getElementById("questCoins").textContent = "🪙 " + me.coins + " Coins";
+        document.getElementById("greetingName").textContent = me.name;
 
-        const view = document.createElement("span");
-        view.className = "view-pet";
-        view.textContent = "View Pet →";
+        const done = quests.quests.filter(q => q.progress >= q.goal).length;
+        const unclaimed = quests.quests.filter(q => q.progress >= q.goal && !q.claimed).length;
+        document.getElementById("questDesc").textContent =
+          done + " / " + quests.quests.length + " daily quests done" + (unclaimed ? " · rewards ready!" : "");
+        document.getElementById("questFill").style.width = (done / quests.quests.length * 100) + "%";
 
-        card.append(avatar, name, breed, statRow, view);
-        grid.appendChild(card);
-      });
+        const maxPets = catalog.maxPets;
+        document.getElementById("petCount").textContent = petData.pets.length + " / " + maxPets;
 
-      if (pets.length < MAX_PETS) {
-        const adopt = document.createElement("a");
-        adopt.className = "pet-card adopt";
-        adopt.href = "shop.html";
-        adopt.innerHTML =
-          '<div class="adopt-plus">＋</div>' +
-          '<div class="adopt-title">Adopt another pet</div>' +
-          '<div class="adopt-sub">Visit the shop · ' + (MAX_PETS - pets.length) + ' space' + (MAX_PETS - pets.length === 1 ? "" : "s") + ' left</div>';
-        grid.appendChild(adopt);
+        const kinds = Object.fromEntries(catalog.pets.map(p => [p.type, p]));
+        const grid = document.getElementById("petGrid");
+        grid.innerHTML = "";
+        petData.pets.forEach(p => { if (kinds[p.type]) grid.appendChild(petCard(p, kinds[p.type])); });
+
+        if (petData.pets.length < maxPets) {
+          const left = maxPets - petData.pets.length;
+          const adopt = document.createElement("a");
+          adopt.className = "pet-card adopt";
+          adopt.href = "shop.html";
+          adopt.innerHTML =
+            '<div class="adopt-plus">＋</div>' +
+            '<div class="adopt-title">Adopt another pet</div>' +
+            '<div class="adopt-sub">Visit the shop · ' + left + ' space' + (left === 1 ? "" : "s") + ' left</div>';
+          grid.appendChild(adopt);
+        }
+      } catch (err) {
+        api.showError(err);
       }
     }
 
     renderHome();
-    window.addEventListener("pageshow", renderHome);   // coming back from the shop shows the new pet
+    window.addEventListener("pageshow", e => { if (e.persisted) renderHome(); });   // back button: refresh
   </script>
 
 </body>
 </html>
-
-//localStorage.setItem("cloudpet_coins", 250); location.reload();

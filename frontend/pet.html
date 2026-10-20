@@ -345,7 +345,7 @@ h2 { font-size: 1.15rem; margin: 20px 0 14px; }
     <a href="profile.html">Profile</a>
   </div>
   <div class="nav-right">
-    <div class="coin-pill" id="coinDisplay">🪙 0</div>
+    <div class="coin-pill" id="coinDisplay">🪙 …</div>
     <div class="avatar">L</div>
     <a href="login.html" class="logout-link">Logout</a>
   </div>
@@ -417,7 +417,9 @@ h2 { font-size: 1.15rem; margin: 20px 0 14px; }
 
 <div class="toast" id="toast" role="status"></div>
 
-<script>
+<script src="js/state.js"></script>
+<script src="js/api.js"></script>
+<script type="module">
 /* =====================================================
    Config
    ===================================================== */
@@ -527,11 +529,9 @@ const PETS = {
 };
 
 /* Stat changes for each action (feed is food-based, clean is the mini-game) */
-const EFFECTS = {
-  play:  { happiness: 10, energy: -10, hunger: -5 },
-  sleep: { energy: 20, hunger: -5 }
-};
+/* What each action does to the stats is decided by the server (backend/src/catalog.js). */
 
+/* Food icons only: the stat changes are decided by the server. */
 const FOODS = {
   Apple:  { emoji: "🍎", hunger: 15, happiness: 3 },
   Fish:   { emoji: "🐟", hunger: 20, happiness: 5 },
@@ -582,85 +582,78 @@ function toast(msg) {
    ===================================================== */
 const params = new URLSearchParams(window.location.search);
 
-/* Which pets does the player own? (written by state.js on home/shop; Luna is the free starter) */
-const STARTER = { uid: "1", type: 1, name: "Luna" };
-let ownedPets = readJSON("cloudpet_pets", null);
-if (!Array.isArray(ownedPets)) ownedPets = [STARTER];
-ownedPets = ownedPets.filter(p => p && PETS[p.type]);
+/* Everything about the player comes from the server: coins, which pets they own, their stats, their inventory. */
+let me, ownedList, inventory;
+
+try {
+  const [profile, petData, inventoryData] = await Promise.all([api.me(), api.pets(), api.inventory()]);
+  me = profile;
+  ownedList = petData.pets.filter(p => PETS[p.type]);
+  inventory = inventoryData.items;
+} catch (err) {
+  api.showError(err);
+  await new Promise(() => {});          // nothing to show without the server: stop here
+}
 
 /* ?pet=<uid> picks one owned pet. An old-style ?id=<kind> opens the first owned pet of that kind. */
 const requestedUid = params.get("pet");
 const requestedKind = params.get("id");
-const owned = ownedPets.find(p => String(p.uid) === requestedUid)
-           || (requestedUid === null ? ownedPets.find(p => String(p.type) === requestedKind) : null);
+const ownedPet = ownedList.find(p => p.uid === requestedUid)
+              || (requestedUid === null ? ownedList.find(p => String(p.type) === requestedKind) : null);
 
-/* Not owned (a bought-nothing link, or a pet that doesn't exist): back to home. */
-if (!owned) window.location.replace("home.html");
-const ownedPet = owned || ownedPets[0] || STARTER;   // only used for the instant before the redirect
-
-const id = String(ownedPet.type);                            // which kind: picks animations and stats
-const pet = { ...PETS[id], name: ownedPet.name || PETS[id].name };
-const STATE_KEY = "cloudpet_pet_state_" + ownedPet.uid;      // stats are saved per pet, so two Embers stay separate
-
-/* Merge with defaults so old/partial saves can't produce missing or unknown stats */
-const state = { ...pet.stats };
-const saved = readJSON(STATE_KEY, {});
-for (const k in state) {
-  if (typeof saved[k] === "number") state[k] = clamp(saved[k]);
+/* Not owned (or no such pet): back to Home. */
+if (!ownedPet) {
+  window.location.replace("home.html");
+  await new Promise(() => {});
 }
 
+const id = String(ownedPet.type);                                   // which kind: picks animations and traits
+const pet = { ...PETS[id], name: ownedPet.name };
+const state = { ...ownedPet.stats };                                // the server's numbers (kept between 0 and 100)
+
 let currentAnimation = "idle";
+let busy = false;                                                   // one action at a time
+
+/* Copy a pet the server sent back into what's on screen */
+function takeFromServer(updated) {
+  Object.assign(ownedPet, updated);
+  Object.assign(state, updated.stats);
+}
 
 /* =====================================================
-   Accessories + themes (same rules as js/state.js; this page reads the same saved data)
+   Accessories
    ===================================================== */
 const ACCESSORIES = {
   "Cute Hat": { icon: "🎩", happiness: 10 },
   "Pink Bow": { icon: "🎀", happiness: 8 }
 };
 
-const THEME_VARS = {
-  "Garden Theme": { "--bg-deep": "#1b4332", "--bg-mid": "#2d6a4f", "--bg-light": "#95d5b2", "--card": "#eafaf0", "--card-soft": "#f3fcf6", "--ink": "#14392a", "--ink-soft": "#3f6b57", "--pink": "#ff8fab", "--purple": "#2e9e6b" },
-  "Ocean Theme":  { "--bg-deep": "#0b2545", "--bg-mid": "#13579b", "--bg-light": "#8ecae6", "--card": "#e7f3fb", "--card-soft": "#f1f8fd", "--ink": "#0d2b4a", "--ink-soft": "#46688a", "--pink": "#ff7aa8", "--purple": "#1d7fd1" },
-  "Sunset Theme": { "--bg-deep": "#4a1033", "--bg-mid": "#c2410c", "--bg-light": "#fbbf77", "--card": "#fdeee0", "--card-soft": "#fff6ec", "--ink": "#4a1f10", "--ink-soft": "#8a5a44", "--pink": "#ff5c8a", "--purple": "#d9480f" }
-};
+const ownedQty = name => (inventory.find(i => i.name === name) || { qty: 0 }).qty;
+const wornByOthers = name => ownedList.filter(p => p.uid !== ownedPet.uid && p.equipped === name).length;
+const wornAccessory = () => (ACCESSORIES[ownedPet.equipped] ? ownedPet.equipped : null);
 
-const inventoryNow = () => { const i = readJSON("cloudpet_inventory", []); return Array.isArray(i) ? i : []; };
-const countOwned = name => inventoryNow().filter(i => i.name === name).length;
-const equippedMap = () => { const e = readJSON("cloudpet_equipped", {}); return e && typeof e === "object" && !Array.isArray(e) ? e : {}; };
-const countWornByOthers = name => { const w = equippedMap(); return Object.keys(w).filter(u => w[u] === name && u !== String(ownedPet.uid)).length; };
-
-function wornAccessory() {
-  const name = equippedMap()[ownedPet.uid];
-  return ACCESSORIES[name] && countOwned(name) > 0 ? name : null;     // ignore one that is no longer owned
-}
-
-function applySavedTheme() {
-  const name = localStorage.getItem("cloudpet_theme");
-  if (!THEME_VARS[name] || countOwned(name) < 1) return;
-  Object.entries(THEME_VARS[name]).forEach(([k, v]) => document.documentElement.style.setProperty(k, v));
-}
-applySavedTheme();
-
-function setAccessory(name) {                                          // name = null takes it off
-  const worn = equippedMap();
-  if (name) worn[ownedPet.uid] = name; else delete worn[ownedPet.uid];
-  writeJSON("cloudpet_equipped", worn);
+async function setAccessory(name) {                                 // name = null takes it off
+  try {
+    const result = await api.equip(ownedPet.uid, name);
+    takeFromServer(result.pet);
+  } catch (err) {
+    toast("⚠️ " + err.message);
+  }
   renderAccessories();
   renderStats();
 }
 
 function renderAccessories() {
   const current = wornAccessory();
-  const owned = [...new Set(inventoryNow().filter(i => ACCESSORIES[i.name]).map(i => i.name))];
+  const names = inventory.filter(i => ACCESSORIES[i.name]).map(i => i.name);
   const list = $("accList");
   list.innerHTML = "";
 
-  owned.forEach(name => {
+  names.forEach(name => {
     const b = document.createElement("button");
     const isOn = name === current;
+    const free = ownedQty(name) - wornByOthers(name) > 0;
     b.className = "acc-btn" + (isOn ? " on" : "");
-    const free = countOwned(name) - countWornByOthers(name) > 0;
     b.textContent = isOn ? `${ACCESSORIES[name].icon} ${name} · Take off` : `${ACCESSORIES[name].icon} ${name}`;
     b.disabled = !isOn && !free;
     b.title = !isOn && !free ? "Another pet is wearing your only one" : "";
@@ -672,31 +665,10 @@ function renderAccessories() {
   badge.textContent = current ? ACCESSORIES[current].icon : "";
   badge.classList.toggle("show", !!current);
 
-  $("accNote").innerHTML = owned.length === 0
+  $("accNote").innerHTML = names.length === 0
     ? `${pet.name} has nothing to wear yet. <a href="shop.html">Visit the shop →</a>`
     : current ? `${pet.name} is wearing ${ACCESSORIES[current].icon} ${current}: 😊 +${ACCESSORIES[current].happiness} happiness.`
               : `Pick one for ${pet.name} to wear and get a happiness boost.`;
-}
-
-function saveState() {
-  writeJSON(STATE_KEY, state);
-  window.dispatchEvent(new Event("cloudpetStateUpdated"));
-}
-
-/* Counts what you do today for the Quests page (same data shape as js/state.js). */
-function completeQuest(name) {
-  setFlag("cloudpet_quest_" + name, "true");          // older flags, kept in case another page reads them
-  setFlag("cloudpet_quest_date", getToday());
-
-  let data = readJSON("cloudpet_quests", null);
-  if (!data || typeof data !== "object") data = {};
-  if (data.date !== getToday()) {
-    data = { date: getToday(), counts: {}, claimed: {}, bonus: false, total: Number(data.total) || 0 };
-  }
-  data.counts = data.counts || {};
-  data.counts[name] = (Number(data.counts[name]) || 0) + 1;
-  data.total = (Number(data.total) || 0) + 1;
-  writeJSON("cloudpet_quests", data);
 }
 
 /* =====================================================
@@ -905,9 +877,7 @@ function renderStats() {
 }
 
 function renderCoins() {
-  const raw = localStorage.getItem("cloudpet_coins");
-  const coins = raw === null || isNaN(Number(raw)) ? DEFAULT_COINS : Number(raw);
-  $("coinDisplay").textContent = "🪙 " + coins;
+  $("coinDisplay").textContent = "🪙 " + me.coins;
 }
 
 /* =====================================================
@@ -932,54 +902,52 @@ document.addEventListener("keydown", e => {
 /* =====================================================
    Actions: play / sleep
    ===================================================== */
-function applyEffects(effects) {
-  for (const k in effects) {
-    if (k in state) state[k] = clamp(state[k] + effects[k]);
+async function act(type) {
+  if (busy) return;
+  busy = true;
+
+  try {
+    const result = await api.action(ownedPet.uid, type);          // the server changes the stats and counts the quest
+    takeFromServer(result.pet);
+
+    if (pet.discovery) setFlag("cloudpet_discovery_" + pet.discovery, "true");
+
+    showAnimation(type, type !== "sleep");   // sleeping stays until the next action
+    renderStats();
+    toast(pet.msgs[type]);
+  } catch (err) {
+    api.showError(err);
+  } finally {
+    busy = false;
   }
-}
-
-function act(type) {
-  applyEffects(EFFECTS[type]);
-  saveState();
-
-  completeQuest(type);                      // "play" or "sleep"
-  if (pet.discovery) setFlag("cloudpet_discovery_" + pet.discovery, "true");
-
-  showAnimation(type, type !== "sleep");   // sleeping stays until the next action
-  renderStats();
-  toast(pet.msgs[type]);
 }
 
 /* =====================================================
    Feeding
    ===================================================== */
-function getInventory() {
-  const inv = readJSON("cloudpet_inventory", []);
-  return Array.isArray(inv) ? inv : [];
-}
-
-function foodStart() {
+async function foodStart() {
+  try {
+    inventory = (await api.inventory()).items;        // maybe you just bought food in the shop
+  } catch (err) {
+    api.showError(err);
+  }
   renderFoodOptions();
   openOverlay("foodOverlay");
 }
 
 function renderFoodOptions() {
   const container = $("foodOptions");
-  const counts = {};
-  for (const item of getInventory()) {
-    if (item && FOODS[item.name]) counts[item.name] = (counts[item.name] || 0) + 1;
-  }
+  const foods = inventory.filter(item => FOODS[item.name] && item.qty > 0);
 
-  const names = Object.keys(counts);
-  const hasFood = names.length > 0;
+  const hasFood = foods.length > 0;
   $("noFoodMessage").hidden = hasFood;
   $("shopFoodButton").hidden = hasFood;
 
-  container.innerHTML = names.map(name => `
-    <button class="food-option" data-food="${name}">
-      <span class="food-icon">${FOODS[name].emoji}</span>
-      <span class="food-name">${name}</span>
-      <span class="food-count">× ${counts[name]}</span>
+  container.innerHTML = foods.map(item => `
+    <button class="food-option" data-food="${item.name}">
+      <span class="food-icon">${FOODS[item.name].emoji}</span>
+      <span class="food-name">${item.name}</span>
+      <span class="food-count">× ${item.qty}</span>
     </button>`).join("");
 }
 
@@ -988,27 +956,26 @@ $("foodOptions").addEventListener("click", e => {
   if (btn) feedWithFood(btn.dataset.food);
 });
 
-function feedWithFood(foodName) {
-  const inventory = getInventory();
-  const index = inventory.findIndex(item => item && item.name === foodName);
+async function feedWithFood(foodName) {
+  if (busy) return;
+  busy = true;
 
-  if (index === -1 || !FOODS[foodName]) {
-    toast("🍽️ You don't have that food!");
-    renderFoodOptions();
-    return;
+  try {
+    const result = await api.feed(ownedPet.uid, foodName);        // the server uses up one food and feeds the pet
+    takeFromServer(result.pet);
+
+    closeOverlay("foodOverlay");
+    showAnimation("feed");
+    renderStats();
+    toast(`${foodName} served! 🐾 ${pet.name} enjoyed the meal! 💕`);
+  } catch (err) {
+    toast(err.code === "no-food" ? "🍽️ You don't have that food!" : "⚠️ " + err.message);
+  } finally {
+    busy = false;
   }
 
-  inventory.splice(index, 1);
-  writeJSON("cloudpet_inventory", inventory);
-
-  applyEffects({ hunger: FOODS[foodName].hunger, happiness: FOODS[foodName].happiness });
-  saveState();
-  completeQuest("feed");
-
-  closeOverlay("foodOverlay");
-  showAnimation("feed");
-  renderStats();
-  toast(`${foodName} served! 🐾 ${pet.name} enjoyed the meal! 💕`);
+  try { inventory = (await api.inventory()).items; } catch (err) { /* the next open refreshes it */ }
+  renderFoodOptions();
 }
 
 /* =====================================================
@@ -1078,12 +1045,12 @@ function checkSoapCollision() {
   if (Math.hypot(dx, dy) > b.width / 2) return;
 
   cleaned = true;
-  completeQuest("clean");
-  applyEffects({ hygiene: 15, happiness: 3 });
-  saveState();
   spawnBubbles(b);
-  renderStats();
   toast(`🫧 ${pet.name} is squeaky clean!`);
+
+  api.action(ownedPet.uid, "clean")                  // the server adds the hygiene and counts the quest
+    .then(result => { takeFromServer(result.pet); renderStats(); })
+    .catch(err => api.showError(err));
 
   setTimeout(() => closeOverlay("cleanOverlay"), 1300);
 }
@@ -1111,6 +1078,7 @@ const ACTIONS = { feed: foodStart, clean: cleanStart, play: () => act("play"), s
 document.querySelectorAll("[data-action]").forEach(btn =>
   btn.addEventListener("click", () => ACTIONS[btn.dataset.action]()));
 
+api.applyProfile(me);
 renderHeader();
 renderStats();
 renderAccessories();

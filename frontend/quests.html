@@ -117,7 +117,7 @@
     </div>
 
     <div class="nav-right">
-      <div class="coin-pill" id="coinDisplay">🪙 0</div>
+      <div class="coin-pill" id="coinDisplay">🪙 …</div>
       <div class="avatar">L</div>
       <a href="login.html" class="logout-link">Logout</a>
     </div>
@@ -143,6 +143,7 @@
   </div>
 
   <script src="js/state.js"></script>
+  <script src="js/api.js"></script>
   <script>
     const $ = id => document.getElementById(id);
 
@@ -154,28 +155,15 @@
       notify.timer = setTimeout(() => { $("notification").style.display = "none"; }, 2600);
     }
 
-    function showNavbar() {
-      $("coinDisplay").textContent = "🪙 " + getCoins();
-
-      try {
-        const profile = JSON.parse(localStorage.getItem("cloudpet_profile"));
-        if (profile && profile.avatar) {
-          document.querySelectorAll(".avatar").forEach(el => { el.textContent = profile.avatar; });
-        }
-      } catch (error) { /* keep the default letter */ }
-    }
-
-    function renderQuests() {
+    function renderQuests(data) {
       const grid = $("questGrid");
       grid.innerHTML = "";
 
-      DAILY_QUESTS.forEach(quest => {
-        const progress = questProgress(quest);
-        const complete = isQuestComplete(quest);
-        const claimed = isQuestClaimed(quest);
+      data.quests.forEach(quest => {
+        const complete = quest.progress >= quest.goal;
 
         const card = document.createElement("div");
-        card.className = "quest-card" + (claimed ? " claimed" : "");
+        card.className = "quest-card" + (quest.claimed ? " claimed" : "");
 
         const top = document.createElement("div");
         top.className = "quest-top";
@@ -202,49 +190,35 @@
         const row = document.createElement("div");
         row.className = "progress-row";
         row.innerHTML = '<div class="progress-track"><div class="progress-fill"></div></div><div class="progress-text"></div>';
-        row.querySelector(".progress-fill").style.width = (progress / quest.goal * 100) + "%";
-        row.querySelector(".progress-text").textContent = progress + " / " + quest.goal;
+        row.querySelector(".progress-fill").style.width = (quest.progress / quest.goal * 100) + "%";
+        row.querySelector(".progress-text").textContent = quest.progress + " / " + quest.goal;
 
         const button = document.createElement("button");
         button.type = "button";
-        button.className = "claim-btn" + (complete && !claimed ? " ready" : "");
-        button.disabled = !complete || claimed;
-        button.textContent = claimed ? "Claimed ✓" : complete ? "Claim 🪙 " + quest.reward : "In progress";
-        button.addEventListener("click", () => {
-          const earned = claimQuest(quest.id);
-          if (earned) {
-            const bonus = earned - quest.reward;
-            notify("+" + earned + " coins" + (bonus ? " (includes the +" + bonus + " all-quests bonus!)" : "") + "!", "🪙");
-          }
-          renderAll();
-        });
+        button.className = "claim-btn" + (complete && !quest.claimed ? " ready" : "");
+        button.disabled = !complete || quest.claimed;
+        button.textContent = quest.claimed ? "Claimed ✓" : complete ? "Claim 🪙 " + quest.reward : "In progress";
+        button.addEventListener("click", () => claim(quest, button));
 
         card.append(top, row, button);
         grid.appendChild(card);
       });
 
-      const data = getQuestData();
-      const left = DAILY_QUESTS.filter(q => !data.claimed[q.id]).length;
+      const left = data.quests.filter(q => !q.claimed).length;
       const bonus = $("bonusCard");
-      bonus.className = "bonus-card" + (data.bonus ? " done" : "");
-      bonus.textContent = data.bonus
-        ? "🎉 All quests claimed today. Bonus +" + QUEST_BONUS + " coins collected!"
-        : "⭐ Claim all " + DAILY_QUESTS.length + " quests today for a bonus of 🪙 " + QUEST_BONUS + " (" + left + " to go).";
+      bonus.className = "bonus-card" + (data.bonus.claimed ? " done" : "");
+      bonus.textContent = data.bonus.claimed
+        ? "🎉 All quests claimed today. Bonus +" + data.bonus.reward + " coins collected!"
+        : "⭐ Claim all " + data.quests.length + " quests today for a bonus of 🪙 " + data.bonus.reward + " (" + left + " to go).";
     }
 
-    function renderAchievements() {
-      checkAchievements();
-
+    function renderAchievements(list) {
       const grid = $("achievementGrid");
       grid.innerHTML = "";
-      let unlockedCount = 0;
 
-      ACHIEVEMENTS.forEach(a => {
-        const unlocked = localStorage.getItem(a.key) === "true";
-        if (unlocked) unlockedCount++;
-
+      list.forEach(a => {
         const card = document.createElement("div");
-        card.className = "achievement " + (unlocked ? "unlocked" : "locked");
+        card.className = "achievement " + (a.unlocked ? "unlocked" : "locked");
 
         const icon = document.createElement("div");
         icon.className = "achievement-icon";
@@ -257,23 +231,47 @@
         desc.textContent = a.desc;
         const status = document.createElement("span");
         status.className = "achievement-status";
-        status.textContent = unlocked ? "Unlocked ✓" : "Locked";
+        status.textContent = a.unlocked ? "Unlocked ✓" : "Locked";
 
         card.append(icon, title, desc, status);
         grid.appendChild(card);
       });
 
-      $("achievementCount").textContent = unlockedCount + " / " + ACHIEVEMENTS.length + " unlocked";
+      $("achievementCount").textContent = list.filter(a => a.unlocked).length + " / " + list.length + " unlocked";
     }
 
-    function renderAll() {
-      showNavbar();
-      renderQuests();
-      renderAchievements();
+    function render(data) {
+      renderQuests(data);
+      renderAchievements(data.achievements);
     }
 
-    renderAll();
-    window.addEventListener("pageshow", renderAll);   // coming back from a pet page shows new progress
+    async function claim(quest, button) {
+      button.disabled = true;
+
+      try {
+        const result = await api.claim(quest.id);
+        const bonus = result.earned - quest.reward;
+        notify("+" + result.earned + " coins" + (bonus ? " (includes the +" + bonus + " all-quests bonus!)" : "") + "!", "🪙");
+        $("coinDisplay").textContent = "🪙 " + result.coins;
+        render(result);
+        api.me();                                   // keeps the navbar and coin mirror in step
+      } catch (err) {
+        api.showError(err);
+        load();                                     // show the real state again
+      }
+    }
+
+    async function load() {
+      try {
+        const [me, data] = await Promise.all([api.me(), api.quests()]);
+        render(data);
+      } catch (err) {
+        api.showError(err);
+      }
+    }
+
+    load();
+    window.addEventListener("pageshow", e => { if (e.persisted) load(); });   // back button: refresh
   </script>
 
 </body>

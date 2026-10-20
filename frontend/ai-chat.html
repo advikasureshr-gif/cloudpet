@@ -123,7 +123,7 @@
     </div>
 
     <div class="nav-right">
-      <div class="coin-pill" id="coinDisplay">🪙 250</div>
+      <div class="coin-pill" id="coinDisplay">🪙 …</div>
       <div class="avatar">L</div>
       <a href="login.html" class="logout-link">Logout</a>
     </div>
@@ -183,6 +183,7 @@
   </main>
 
   <script src="js/state.js"></script>
+  <script src="js/api.js"></script>
 
   <script>
     const messages = document.getElementById("messages");
@@ -191,31 +192,32 @@
     const selectedPet = document.getElementById("selectedPet");
     const sendBtn = document.getElementById("sendBtn");
 
-    // Navbar coins + the avatar chosen on the Profile page
-    function updateChatNavbar() {
-      document.getElementById("coinDisplay").textContent = "🪙 " + getCoins();
-
+    // Coins, avatar and theme in the navbar come from the server
+    async function updateChatNavbar() {
       try {
-        const profile = JSON.parse(localStorage.getItem("cloudpet_profile"));
-        if (profile && profile.avatar) {
-          document.querySelectorAll(".avatar").forEach(el => { el.textContent = profile.avatar; });
-        }
+        await api.me();
       } catch (error) {
-        console.error("Could not load the saved profile.", error);
+        api.showError(error);
       }
     }
 
     // The pet list is the pets you actually own
-    function fillPetSelector() {
-      selectedPet.innerHTML = "";
+    async function fillPetSelector() {
+      try {
+        const [petData, catalog] = await Promise.all([api.pets(), api.catalog()]);
+        const kinds = Object.fromEntries(catalog.pets.map(p => [p.type, p]));
 
-      getOwnedPets().forEach(p => {
-        const kind = PET_CATALOG[p.type];
-        const option = document.createElement("option");
-        option.value = p.name;
-        option.textContent = kind.emoji + " " + p.name + " — " + kind.species;
-        selectedPet.appendChild(option);
-      });
+        selectedPet.innerHTML = "";
+        petData.pets.forEach(p => {
+          const kind = kinds[p.type];
+          const option = document.createElement("option");
+          option.value = p.name;
+          option.textContent = (kind ? kind.emoji + " " : "") + p.name + (kind ? " — " + kind.species : "");
+          selectedPet.appendChild(option);
+        });
+      } catch (error) {
+        api.showError(error);
+      }
     }
 
     function addMessage(text, sender) {

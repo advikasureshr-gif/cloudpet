@@ -125,7 +125,7 @@
       <a href="profile.html">Profile</a>
     </div>
     <div class="nav-right">
-      <div class="coin-pill" id="navCoins">🪙 250</div>
+      <div class="coin-pill" id="navCoins">🪙 …</div>
       <div class="avatar">L</div>
       <a href="login.html" class="logout-link">Logout</a>
     </div>
@@ -138,7 +138,7 @@
         <h1>Pet Shop 🛒</h1>
         <p>Everything your pets need to stay happy!</p>
       </div>
-      <div class="balance" id="balance">🪙 250 Coins</div>
+      <div class="balance" id="balance">🪙 … Coins</div>
     </div>
 
     <div class="categories">
@@ -170,7 +170,7 @@
       <p id="modalText">Buy this item?</p>
       <div class="modal-buttons">
         <button class="cancel-btn" onclick="closeModal()">Cancel</button>
-        <button class="confirm-btn" onclick="confirmPurchase()">Buy</button>
+        <button class="confirm-btn" id="confirmBtn" onclick="confirmPurchase()">Buy</button>
       </div>
     </div>
   </div>
@@ -182,299 +182,230 @@
   </div>
 
   <script src="js/state.js"></script>
-
+  <script src="js/api.js"></script>
   <script>
-
-    const shopItems = [
-      { name: "Apple",  category: "food", icon: "🍎", price: 20, description: "A fresh and healthy snack." },
-      { name: "Fish",   category: "food", icon: "🐟", price: 30, description: "A tasty treat for hungry pets." },
-      { name: "Carrot", category: "food", icon: "🥕", price: 15, description: "Crunchy and nutritious." },
-
-      { name: "Cute Hat",      category: "accessories", icon: "🎩", price: 50,  description: "Worn by one pet: 😊 +10 happiness." },
-      { name: "Pink Bow",      category: "accessories", icon: "🎀", price: 40,  description: "Worn by one pet: 😊 +8 happiness." },
-      { name: "Garden Theme", category: "themes", icon: "🌷", price: 100, description: "Fresh greens and soft pinks." },
-      { name: "Ocean Theme",  category: "themes", icon: "🌊", price: 100, description: "Deep blues and sea-glass cards." },
-      { name: "Sunset Theme", category: "themes", icon: "🌅", price: 100, description: "Warm orange and rose tones." }
-    ];
-
-    // The six pets come straight from PET_CATALOG in state.js, so the shop, home and pet page agree.
-    Object.keys(PET_CATALOG).forEach(type => {
-      const kind = PET_CATALOG[type];
-      shopItems.push({
-        name: kind.name,
-        category: "pets",
-        petType: Number(type),
-        icon: kind.emoji,
-        price: kind.price,
-        description: kind.species
-      });
-    });
-
+    // Everything shown here comes from the server: prices, who you are, what you own.
+    let catalog = null;       // { maxPets, pets: [...], items: [...] }
+    let me = null;            // your profile (coins, theme, ...)
+    let petList = [];         // pets you own
+    let inventory = [];       // [{ name, category, icon, qty }]
     let currentCategory = "food";
-    let selectedItem = null;
+    let selected = null;      // what the purchase popup is about
 
+    const $ = id => document.getElementById(id);
 
-    /* ---------- Display coins ---------- */
+    function showNotification(message, icon = "⚠️") {
+      $("notificationIcon").textContent = icon;
+      $("notificationText").textContent = message;
+      $("notification").style.display = "flex";
 
-    function updateCoins() {
-      const coins = getCoins();
-      document.getElementById("navCoins").textContent = "🪙 " + coins;
-      document.getElementById("balance").textContent = "🪙 " + coins + " Coins";
+      clearTimeout(showNotification.timer);
+      showNotification.timer = setTimeout(() => { $("notification").style.display = "none"; }, 2800);
     }
 
+    async function refresh() {
+      [me, petList, inventory] = await Promise.all([api.me(), api.pets().then(r => r.pets), api.inventory().then(r => r.items)]);
+      $("balance").textContent = "🪙 " + me.coins + " Coins";
+      displayInventory();
+      showCategory(currentCategory);
+    }
 
-    /* ---------- Display inventory ---------- */
+    const ownedQty = name => (inventory.find(i => i.name === name) || { qty: 0 }).qty;
+    const wornCount = name => petList.filter(p => p.equipped === name).length;
+
+    /* ---------- Inventory ---------- */
 
     function displayInventory() {
-      const inventory = getInventory();
-      const inventoryList = document.getElementById("inventoryList");
-      const inventoryCount = document.getElementById("inventoryCount");
+      const list = $("inventoryList");
+      list.innerHTML = "";
 
-      inventoryList.innerHTML = "";
-
-      inventoryCount.textContent =
-        inventory.length + (inventory.length === 1 ? " item" : " items");
+      const total = inventory.reduce((n, i) => n + i.qty, 0);
+      $("inventoryCount").textContent = total + (total === 1 ? " item" : " items");
 
       if (inventory.length === 0) {
-        inventoryList.innerHTML =
-          '<div class="inventory-empty">Your inventory is empty. Start shopping! 🛒</div>';
+        list.innerHTML = '<div class="inventory-empty">Your inventory is empty. Start shopping! 🛒</div>';
         return;
       }
 
-      // Group identical items
-      const groupedItems = {};
-
       inventory.forEach(item => {
-        if (groupedItems[item.name]) {
-          groupedItems[item.name].quantity++;
-        } else {
-          groupedItems[item.name] = { ...item, quantity: 1 };
-        }
-      });
+        const box = document.createElement("div");
+        box.className = "inventory-item";
 
-      Object.values(groupedItems).forEach(item => {
-        const inventoryItem = document.createElement("div");
-        inventoryItem.className = "inventory-item";
-        inventoryItem.innerHTML =
-          '<span class="inventory-item-icon">' + item.icon + '</span>' +
-          '<span>' + item.name + (item.category === "themes" ? '' : ' × ' + item.quantity) + '</span>';
+        const icon = document.createElement("span");
+        icon.className = "inventory-item-icon";
+        icon.textContent = item.icon;
+
+        const label = document.createElement("span");
+        label.textContent = item.name + (item.category === "themes" ? "" : " × " + item.qty);
+
+        box.append(icon, label);
 
         if (item.category === "themes") {
-          const using = getActiveTheme() === item.name;
+          const using = me.theme === item.name;
           const use = document.createElement("button");
           use.className = "use-btn" + (using ? " in-use" : "");
           use.textContent = using ? "✓ In use" : "Use";
           use.disabled = using;
-          use.addEventListener("click", () => { setActiveTheme(item.name); displayInventory(); });
-          inventoryItem.appendChild(use);
+          use.addEventListener("click", () => chooseTheme(item.name));
+          box.appendChild(use);
         } else if (item.category === "accessories") {
-          const worn = countWorn(item.name);
           const note = document.createElement("span");
           note.className = "inventory-note";
-          note.textContent = worn ? "(" + worn + " worn)" : "(open a pet to wear)";
-          inventoryItem.appendChild(note);
+          note.textContent = wornCount(item.name) ? "(" + wornCount(item.name) + " worn)" : "(open a pet to wear)";
+          box.appendChild(note);
         }
 
-        inventoryList.appendChild(inventoryItem);
+        list.appendChild(box);
       });
 
-      if (getActiveTheme() !== "Default") {
+      if (me.theme && me.theme !== "Default") {
         const reset = document.createElement("button");
         reset.className = "use-btn reset-theme";
         reset.textContent = "↺ Back to default theme";
-        reset.addEventListener("click", () => { setActiveTheme("Default"); displayInventory(); });
-        inventoryList.appendChild(reset);
+        reset.addEventListener("click", () => chooseTheme("Default"));
+        list.appendChild(reset);
       }
     }
 
+    async function chooseTheme(name) {
+      try {
+        me = await api.setTheme(name);
+        displayInventory();
+      } catch (err) {
+        api.showError(err);
+      }
+    }
 
-    /* ---------- Display items ---------- */
+    /* ---------- Items for sale ---------- */
 
     function showCategory(category, button) {
       currentCategory = category;
-
-      const grid = document.getElementById("itemGrid");
-      const emptyMessage = document.getElementById("emptyMessage");
-
-      grid.innerHTML = "";
 
       if (button) {
         document.querySelectorAll(".category-btn").forEach(btn => btn.classList.remove("active"));
         button.classList.add("active");
       }
 
-      const filteredItems = shopItems.filter(item => item.category === category);
+      const grid = $("itemGrid");
+      grid.innerHTML = "";
 
-      if (filteredItems.length === 0) {
-        emptyMessage.style.display = "block";
-        return;
-      }
+      const forSale = category === "pets"
+        ? catalog.pets.map(p => ({ kind: "pet", type: p.type, name: p.name, icon: p.emoji, price: p.price, description: p.species }))
+        : catalog.items.filter(i => i.category === category).map(i => ({ kind: "item", ...i }));
 
-      emptyMessage.style.display = "none";
-
-      const owned = getOwnedPets();
-      const full = owned.length >= MAX_PETS;
+      $("emptyMessage").style.display = forSale.length ? "none" : "block";
+      const full = petList.length >= catalog.maxPets;
 
       if (category === "pets") {
         const banner = document.createElement("div");
         banner.className = "pets-banner";
         banner.textContent = full
-          ? "🏡 Your home is full (" + owned.length + " / " + MAX_PETS + " pets). No room for more!"
-          : "🏡 You have " + owned.length + " / " + MAX_PETS + " pets. You can adopt the same kind more than once!";
+          ? "🏡 Your home is full (" + petList.length + " / " + catalog.maxPets + " pets). No room for more!"
+          : "🏡 You have " + petList.length + " / " + catalog.maxPets + " pets. You can adopt the same kind more than once!";
         grid.appendChild(banner);
       }
 
-      filteredItems.forEach(item => {
+      forSale.forEach(item => {
+        let description = item.description;
+        let label = "Buy";
+        let disabled = false;
+
+        if (item.kind === "pet") {
+          const have = petList.filter(p => p.type === item.type).length;
+          if (have) description += " · You own " + have;
+          if (full) { disabled = true; label = "Full"; }
+        } else if (item.category === "themes" && ownedQty(item.name) > 0) {
+          disabled = true;
+          label = "Owned";
+        }
+
         const card = document.createElement("div");
         card.className = "item-card";
-
-        let description = item.description;
-        let buyDisabled = false;
-        let buyLabel = "Buy";
-
-        if (item.category === "themes" && countOwned(item.name) > 0) {
-          buyDisabled = true;
-          buyLabel = "Owned";
-        }
-
-        if (item.category === "pets") {
-          const have = owned.filter(p => p.type === item.petType).length;
-          description = item.description + (have ? " · You own " + have : "");
-          if (full) {
-            buyDisabled = true;
-            buyLabel = "Full";
-          }
-        }
-
         card.innerHTML =
-          '<div class="item-icon">' + item.icon + '</div>' +
-          '<div class="item-name">' + item.name + '</div>' +
-          '<div class="item-description">' + description + '</div>' +
-          '<div class="item-price">🪙 ' + item.price + '</div>';
+          '<div class="item-icon"></div><div class="item-name"></div>' +
+          '<div class="item-description"></div><div class="item-price"></div>';
+        card.querySelector(".item-icon").textContent = item.icon;
+        card.querySelector(".item-name").textContent = item.name;
+        card.querySelector(".item-description").textContent = description;
+        card.querySelector(".item-price").textContent = "🪙 " + item.price;
 
         const buy = document.createElement("button");
         buy.className = "buy-btn";
-        buy.textContent = buyLabel;
-        buy.disabled = buyDisabled;
-        buy.addEventListener("click", () => buyItem(item));
+        buy.textContent = label;
+        buy.disabled = disabled;
+        buy.addEventListener("click", () => askToBuy(item));
         card.appendChild(buy);
 
         grid.appendChild(card);
       });
     }
 
+    /* ---------- Buying ---------- */
 
-    /* ---------- Purchase ---------- */
-
-    function showNotification(message, icon = "⚠️") {
-      const notification = document.getElementById("notification");
-
-      document.getElementById("notificationIcon").textContent = icon;
-      document.getElementById("notificationText").textContent = message;
-
-      notification.style.display = "flex";
-
-      clearTimeout(showNotification.timer);
-      showNotification.timer = setTimeout(() => {
-        notification.style.display = "none";
-      }, 2500);
-    }
-
-    function buyItem(item) {
-      const coins = getCoins();
-
-      if (item.category === "pets" && !canAddPet()) {
-        showNotification("Your home is full! You can only have " + MAX_PETS + " pets.", "🏡");
+    function askToBuy(item) {
+      // The server makes the final decision; these checks just give a quicker answer.
+      if (item.kind === "pet" && petList.length >= catalog.maxPets) {
+        showNotification("Your home is full! You can only have " + catalog.maxPets + " pets.", "🏡");
+        return;
+      }
+      if (me.coins < item.price) {
+        showNotification("Not enough coins! You need " + (item.price - me.coins) + " more coins.", "🪙");
         return;
       }
 
-      if (coins < item.price) {
-        showNotification("Not enough coins! You need " + (item.price - coins) + " more coins.", "🪙");
-        return;
-      }
-
-      selectedItem = item;
-
-      document.getElementById("modalIcon").textContent = item.icon;
-      document.getElementById("modalText").textContent =
-        item.category === "pets"
-          ? "Adopt " + item.name + " (" + item.description + ") for 🪙 " + item.price + " coins?"
-          : "Buy " + item.name + " for 🪙 " + item.price + " coins?";
-
-      document.getElementById("purchaseModal").style.display = "flex";
+      selected = item;
+      $("modalIcon").textContent = item.icon;
+      $("modalText").textContent = item.kind === "pet"
+        ? "Adopt " + item.name + " (" + item.description + ") for 🪙 " + item.price + " coins?"
+        : "Buy " + item.name + " for 🪙 " + item.price + " coins?";
+      $("purchaseModal").style.display = "flex";
     }
 
     function closeModal() {
-      document.getElementById("purchaseModal").style.display = "none";
-      selectedItem = null;
+      $("purchaseModal").style.display = "none";
+      selected = null;
     }
 
-    function confirmPurchase() {
-      if (!selectedItem) return;
+    async function confirmPurchase() {
+      if (!selected) return;
+      const item = selected;
+      $("confirmBtn").disabled = true;
 
-      const item = selectedItem;
+      try {
+        if (item.kind === "pet") {
+          const result = await api.buyPet(item.type);
+          showNotification("Welcome home, " + result.pet.name + "! Find them on the Home page.", "🎉");
+        } else {
+          await api.buyItem(item.name);
 
-      if (item.category === "pets") {
-        // Check there is room BEFORE taking any coins
-        if (!canAddPet()) {
-          closeModal();
-          showNotification("Your home is full! You can only have " + MAX_PETS + " pets.", "🏡");
-          showCategory("pets");
-          return;
+          if (item.category === "themes") {
+            await api.setTheme(item.name);
+            showNotification(item.name + " applied! Change it any time in your inventory.", "🎨");
+          } else if (item.category === "accessories") {
+            showNotification(item.name + " bought! Open a pet's page to put it on.", "🎀");
+          }
         }
-
-        if (!spendCoins(item.price)) {
-          closeModal();
-          return;
-        }
-
-        const result = addPet(item.petType);
-
-        if (!result.ok) {                      // shouldn't happen, but never keep coins for nothing
-          addCoins(item.price);
-          closeModal();
-          return;
-        }
-
-        updateCoins();
+      } catch (err) {
+        // 402 not-enough-coins, 409 home-full / already-owned: the server's message explains it
+        showNotification(err.message, err.code === "not-enough-coins" ? "🪙" : "⚠️");
+      } finally {
         closeModal();
-        showCategory("pets");
-        showNotification("Welcome home, " + result.pet.name + "! Find them on the Home page.", "🎉");
-        return;
+        $("confirmBtn").disabled = false;
       }
 
-      if (!spendCoins(item.price)) {
-        closeModal();
-        return;
-      }
-
-      addToInventory({
-        name: item.name,
-        category: item.category,
-        icon: item.icon,
-        price: item.price
-      });
-
-      if (item.category === "themes") {
-        setActiveTheme(item.name);
-        showNotification(item.name + " applied! Change it any time in your inventory.", "🎨");
-      } else if (item.category === "accessories") {
-        showNotification(item.name + " bought! Open a pet's page to put it on.", "🎀");
-      }
-
-      displayInventory();
-      updateCoins();
-      closeModal();
-      showCategory(currentCategory);
+      try { await refresh(); } catch (err) { api.showError(err); }
     }
 
+    /* ---------- Start ---------- */
 
-    /* ---------- Initial display ---------- */
-
-    updateCoins();
-    displayInventory();
-    showCategory("food", document.querySelector(".category-btn"));
-
+    (async () => {
+      try {
+        catalog = await api.catalog();
+        await refresh();
+      } catch (err) {
+        api.showError(err);
+      }
+    })();
   </script>
 
 </body>
