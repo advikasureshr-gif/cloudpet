@@ -105,3 +105,17 @@ Night Owl uses the player's own clock (8pm to 5am); pet discoveries unlock after
 - `GET /api/weather`: today's weather and each pet's reaction.
 - `POST /api/reminder/return`: the link in the reminder email (`home.html?from=reminder`). Every pet gets +15 happiness, once per email, within 24 hours. Day 5 sets `reminderSentAt` when the email goes out.
 - Dev helpers: `POST /api/dev/weather {condition}` (clear, cloudy, hot, cold, rain, storm, snow; empty body = real weather), `POST /api/dev/reminder`, `POST /api/dev/tick`.
+
+## AI companion (Day 4)
+
+`POST /api/chat  { petUid, message, history }` → `{ reply, provider, remaining }`.
+The server builds the prompt from the pet's real stats, accessory, weather reaction and time since your last visit (`buildSystemPrompt` in `src/services/chat.js`).
+
+- `CHAT_PROVIDER=mock` (default): free offline replies, no AWS needed.
+- `CHAT_PROVIDER=groq`: Groq API. Put `GROQ_API_KEY=gsk_...` and `CHAT_PROVIDER=groq` in `backend/.env`. Model from `GROQ_MODEL` (default `openai/gpt-oss-20b`).
+- `CHAT_PROVIDER=openai`: OpenAI API. Put `OPENAI_API_KEY=sk-...` and `CHAT_PROVIDER=openai` in `backend/.env` (copy `.env.example`), then `npm start`. Model from `OPENAI_MODEL` (default `gpt-5-mini`); the key never leaves the server.
+- `CHAT_PROVIDER=bedrock`: Amazon Bedrock Converse API with `BEDROCK_MODEL_ID` (default `us.amazon.nova-lite-v1:0`) in `AWS_REGION`.
+  Needs: AWS credentials on your machine (`aws configure`), the model enabled for your account in the Bedrock console, and `bedrock:InvokeModel` permission.
+- Cost guards: 500-character messages, 250-token replies, 6 turns of history, 30 messages per player per day (`CHAT_DAILY_LIMIT`). A failed Bedrock call isn't counted.
+
+Try it for real once: `CHAT_PROVIDER=bedrock npm start`.

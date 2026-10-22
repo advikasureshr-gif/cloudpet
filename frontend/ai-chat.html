@@ -143,7 +143,7 @@
           <h2>Your Pet Care Companion</h2>
           <p>Here to help you care for your virtual pets 💜</p>
         </div>
-        <span class="prototype-label">Frontend prototype</span>
+        <span class="prototype-label" id="modeLabel">AI companion</span>
       </header>
 
       <div class="pet-selector">
@@ -173,9 +173,9 @@
         </form>
 
         <p class="disclaimer">
-          Prototype responses are predefined for interface testing.
-          AI-generated advice and personalized pet-state integration
-          will be connected through the backend later.
+          Answers use your pet's real stats, health and today's weather.
+          They are game advice, not veterinary advice.
+          <span id="remaining"></span>
         </p>
       </div>
 
@@ -211,7 +211,8 @@
         petData.pets.forEach(p => {
           const kind = kinds[p.type];
           const option = document.createElement("option");
-          option.value = p.name;
+          option.value = p.uid;
+          option.dataset.name = p.name;
           option.textContent = (kind ? kind.emoji + " " : "") + p.name + (kind ? " — " + kind.species : "");
           selectedPet.appendChild(option);
         });
@@ -236,47 +237,49 @@
       messages.scrollTop = messages.scrollHeight;
     }
 
-    // Temporary responses for frontend testing only.
-    // Replace this function with an API request during backend integration.
-    function getPrototypeResponse(question, petName) {
-      const text = question.toLowerCase();
+    // The last few turns, so follow-up questions make sense. Cleared when you pick another pet.
+    let history = [];
 
-      if (text.includes("happiness") || text.includes("happy")) {
-        return `To help ${petName} feel happier, try regular playtime, feeding them when hungry, and keeping their hygiene up. Accessories from the shop boost happiness too, while they're worn. You can check their happiness stat on the Pet page. 💖`;
-      }
-
-      if (text.includes("feed") || text.includes("food") || text.includes("eat") || text.includes("hungry")) {
-        return `For ${petName}, use the food items available in your CloudPet inventory and check their hunger stat. Different real animals have different dietary needs, so always verify species-specific food guidance before applying advice to a real pet. 🍎`;
-      }
-
-      if (text.includes("play") || text.includes("activity") || text.includes("fun")) {
-        return `Try a short play session with ${petName}, then check their happiness and energy stats. Choose activities suitable for their species and give them time to rest, too! 🎾`;
-      }
-
-      if (text.includes("health") || text.includes("healthy") || text.includes("care") || text.includes("comfortable")) {
-        return `For ${petName}, keep an eye on the health, hunger, happiness, energy, and hygiene stats on the Pet page. These are game stats, not a diagnosis of a real animal. If a real pet seems unwell, contact a veterinarian. 🐾`;
-      }
-
-      return `That's a good question about ${petName}! 💜 This chat is currently running in frontend prototype mode, so I don't have a connected AI model yet. Once the backend API is integrated, this is where personalized responses based on your pet's state and history will appear.`;
+    function showThinking() {
+      const message = document.createElement("div");
+      message.className = "message bot-message";
+      message.innerHTML = '<span class="message-sender">🐾 CloudPet Companion</span><div>…</div>';
+      messages.appendChild(message);
+      messages.scrollTop = messages.scrollHeight;
+      return message;
     }
 
-    function sendMessage(text) {
+    async function sendMessage(text) {
       const question = text.trim();
-      if (!question) return;
+      if (!question || sendBtn.disabled) return;
+      if (!selectedPet.value) { api.showError(new Error("Choose a pet first.")); return; }
 
       addMessage(question, "user");
       chatInput.value = "";
       sendBtn.disabled = true;
+      const thinking = showThinking();
 
-      const petName = selectedPet.value;
+      try {
+        const result = await api.chat(selectedPet.value, question, history);
+        thinking.remove();
+        addMessage(result.reply, "bot");
 
-      // Simulate a short reply while testing the interface.
-      window.setTimeout(() => {
-        addMessage(getPrototypeResponse(question, petName), "bot");
+        history.push({ role: "user", text: question }, { role: "assistant", text: result.reply });
+        history = history.slice(-6);
+
+        document.getElementById("modeLabel").textContent =
+          ({ groq: "Powered by Groq", openai: "Powered by OpenAI", bedrock: "Powered by Amazon Bedrock" })[result.provider] || "Offline demo mode";
+        document.getElementById("remaining").textContent = result.remaining + " messages left today.";
+      } catch (err) {
+        thinking.remove();
+        addMessage(err.status === 429 || err.status === 502 ? err.message : "Sorry, I couldn't answer that. Is the server running?", "bot");
+      } finally {
         sendBtn.disabled = false;
         chatInput.focus();
-      }, 350);
+      }
     }
+
+    selectedPet.addEventListener("change", () => { history = []; });
 
     chatForm.addEventListener("submit", event => {
       event.preventDefault();
