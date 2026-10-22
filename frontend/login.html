@@ -68,9 +68,9 @@ input:focus { border-color: #e6a5d4; box-shadow: 0 0 0 3px rgba(230,165,212,.2);
 
     <form id="loginForm">
         <div class="form-group">
-            <label for="email">Email / Username</label>
+            <label for="email">Username</label>
             <input type="text" id="email" name="email"
-                   placeholder="Enter your email or username" required>
+                   placeholder="Enter your username" autocomplete="username" required>
         </div>
 
         <div class="form-group">
@@ -89,64 +89,54 @@ input:focus { border-color: #e6a5d4; box-shadow: 0 0 0 3px rgba(230,165,212,.2);
     </p>
 </main>
 
+<script src="js/api.js"></script>
 <script>
+const USERNAME_PATTERN = /^[a-zA-Z0-9_-]{1,32}$/;
+
 document.getElementById("loginForm")
-  .addEventListener("submit", function(event) {
+  .addEventListener("submit", async function(event) {
     event.preventDefault();
 
-    const enteredLogin =
-      document.getElementById("email").value.trim();
-
-    const password =
-      document.getElementById("password").value;
-
-    const message =
-      document.getElementById("message");
+    const username = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const message = document.getElementById("message");
+    const button = document.querySelector(".login-button");
 
     message.textContent = "";
-    message.style.color = "#ff6b81";
+    message.style.color = "#b00020";
 
-    // Check that both fields are filled
-    if (!enteredLogin || !password) {
-      message.textContent =
-        "Please enter your email/username and password.";
+    if (!username || !password) {
+      message.textContent = "Please enter your username and password.";
       return;
     }
 
-    const profileData =
-      localStorage.getItem("cloudpet_profile");
-
-    if (!profileData) {
-      message.textContent =
-        "No CloudPet account found. Please sign up first.";
+    if (!USERNAME_PATTERN.test(username)) {
+      message.textContent = "Usernames use letters, numbers, - and _ only.";
       return;
     }
 
-    const profile = JSON.parse(profileData);
-    const enteredValue = enteredLogin.toLowerCase();
+    button.disabled = true;
 
-    // Check email or username
-    if (
-      enteredValue !== (profile.email || "").toLowerCase() &&
-      enteredValue !==
-        (profile.username || profile.name || "").toLowerCase()
-    ) {
-      message.textContent =
-        "Email or username not found.";
-      return;
+    try {
+      // Prototype only: the server checks the account exists. Password checking is done by
+      // Amazon Cognito once the app moves to AWS.
+      if (!(await api.userExists(username))) {
+        message.textContent = "Username not found. Please sign up first.";
+        button.disabled = false;
+        return;
+      }
+
+      api.setUser(username.toLowerCase());
+      localStorage.setItem("cloudpet_logged_in", "true");
+      const me = await api.me();
+
+      message.style.color = "#5a286e";
+      message.textContent = "Welcome back, " + me.name + "! 🐾";
+      setTimeout(() => { window.location.href = "home.html"; }, 800);
+    } catch (err) {
+      message.textContent = err.message;
+      button.disabled = false;
     }
-
-    // Prototype only: password verification will be handled
-    // by Amazon Cognito during AWS integration.
-    localStorage.setItem("cloudpet_logged_in", "true");
-
-    message.style.color = "#8b5cf6";
-    message.textContent =
-      "Welcome back, " + profile.name + "! 🐾";
-
-    setTimeout(() => {
-      window.location.href = "home.html";
-    }, 800);
   });
 </script>
 </body>

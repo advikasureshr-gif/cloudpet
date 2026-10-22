@@ -123,13 +123,13 @@
     <div class="top-row">
       <div class="card weather-card">
         <div style="display:flex; align-items:center; gap:16px;">
-          <div class="weather-icon">☀️</div>
+          <div class="weather-icon" id="weatherIcon">☀️</div>
           <div class="weather-info">
-            <h2>Sunny</h2>
-            <div class="temp">28°C</div>
+            <h2 id="weatherName">Sunny</h2>
+            <div class="temp" id="weatherTemp">28°C</div>
           </div>
         </div>
-        <div class="weather-note">A beautiful day! Your pets should be full of energy.</div>
+        <div class="weather-note" id="weatherNote"></div>
       </div>
 
       <div class="card quest-card">
@@ -184,7 +184,36 @@
       return card;
     }
 
+    // Today's weather, and the pet the weather affects most
+    async function renderWeather() {
+      try {
+        const w = await api.weather();
+        document.getElementById("weatherIcon").textContent = w.icon;
+        document.getElementById("weatherName").textContent = w.label;
+        document.getElementById("weatherTemp").textContent = w.tempC + "°C";
+
+        const strength = r => Math.abs(r.effect.happiness) + 2 * Math.abs(r.effect.health);
+        const top = w.reactions.slice().sort((a, b) => strength(b) - strength(a))[0];
+        document.getElementById("weatherNote").textContent = top ? top.message : "";
+      } catch (err) { /* the weather card just keeps its last text */ }
+    }
+
+    // Came here from the reminder email link (home.html?from=reminder): every pet gets happier, once per email
+    async function welcomeBack() {
+      if (new URLSearchParams(location.search).get("from") !== "reminder") return;
+      history.replaceState(null, "", location.pathname);
+      try {
+        const r = await api.reminderReturn();
+        api.toast("💕 Welcome back! Your pets missed you: happiness +" + r.boost + " 🐾");
+      } catch (err) {
+        if (err.status === 409) api.toast("💕 Welcome back!");       // already used, or expired
+        else api.showError(err);
+      }
+    }
+
     async function renderHome() {
+      await welcomeBack();
+      renderWeather();
       try {
         const [me, petData, quests, catalog] = await Promise.all([api.me(), api.pets(), api.quests(), api.catalog()]);
 

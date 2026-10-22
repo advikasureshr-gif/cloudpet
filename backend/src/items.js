@@ -17,6 +17,7 @@ export function newPetItem(userId, type, name) {
     equipped: null,
     version: 0,                                // bumped on every change; stops two requests overwriting each other
     createdAt: now,
+    lastTick: now,                             // when time-passing was last applied to the stats
     lastInteraction: now                       // used to work out how much time passed while you were away
   };
 }
@@ -26,7 +27,7 @@ export function toPetDto(item) {
     uid: item.sk.replace("PET#", ""),
     type: item.type,
     name: item.name,
-    stats: item.stats,
+    stats: Object.fromEntries(Object.entries(item.stats).map(([k, v]) => [k, Math.round(v)])),
     equipped: item.equipped || null,
     createdAt: item.createdAt,
     lastInteraction: item.lastInteraction

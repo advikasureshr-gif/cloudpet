@@ -120,3 +120,9 @@ export async function setTheme(userId, theme) {
   }));
   return res.Attributes;
 }
+
+// Does this player exist? (dev login only; on AWS, Cognito answers this)
+export async function userExists(userId) {
+  const res = await db.send(new GetCommand({ TableName: TABLE, Key: { pk: userKey(userId), sk: "PROFILE" } }));
+  return Boolean(res.Item);
+}

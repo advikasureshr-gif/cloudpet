@@ -54,8 +54,91 @@ export const DAILY_QUESTS = [
 export const QUEST_BONUS = 50;
 
 export const ACHIEVEMENTS = [
-  { id: "first_steps",   icon: "👣", title: "First Steps",   desc: "Take care of a pet for the first time" },
-  { id: "pet_lover",     icon: "💖", title: "Pet Lover",     desc: "Own 3 pets" },
-  { id: "super_owner",   icon: "🏡", title: "Super Owner",   desc: "Fill your home with 6 pets" },
-  { id: "pet_haven_pro", icon: "🏆", title: "Pet Haven Pro", desc: "Claim every daily quest in one day" }
+  { id: "first_steps",   icon: "👣", title: "First Steps",   desc: "Take care of a pet for the first time", reward: 50 },
+  { id: "pet_lover",     icon: "💖", title: "Pet Lover",     desc: "Own 3 pets",                            reward: 75 },
+  { id: "super_owner",   icon: "🏡", title: "Super Owner",   desc: "Fill your home with 6 pets",            reward: 100 },
+  { id: "pet_haven_pro", icon: "🏆", title: "Pet Haven Pro", desc: "Claim every daily quest in one day",    reward: 250 }
 ];
+
+/* Discoveries: surprises that pay out once. "hidden" ones keep their goal secret on the page until found. */
+export const DISCOVERIES = [
+  { id: "rainbow",        icon: "🌈", title: "Rainbow Surprise", desc: "Discover a special surprise while exploring Pet Haven.",     reward: 30, hidden: true,  group: "hidden" },
+  { id: "night_owl",      icon: "🌙", title: "Night Owl",        desc: "Visit your pet during the night to discover something special.", reward: 40, hidden: true, group: "hidden" },
+  { id: "mystery_friend", icon: "✨", title: "Mystery Friend",   desc: "Interact with your pet enough times to uncover this secret.", reward: 60, hidden: true,  group: "hidden" },
+  { id: "cat",            icon: "🐱", title: "Cat Discovery",    desc: "Unlock a special discovery by taking care of a cat.",        reward: 50, hidden: false, group: "pet" },
+  { id: "dog",            icon: "🐶", title: "Dog Discovery",    desc: "Unlock a special discovery by taking care of a dog.",        reward: 50, hidden: false, group: "pet" },
+  { id: "rabbit",         icon: "🐰", title: "Rabbit Discovery", desc: "Unlock a special discovery by taking care of a rabbit.",     reward: 50, hidden: false, group: "pet" }
+];
+export const RAINBOW_ACTIONS = 5;
+export const MYSTERY_ACTIONS = 10;
+
+// Which pet discovery a pet counts towards
+export const petGroup = type => {
+  const emoji = PET_CATALOG[type] && PET_CATALOG[type].emoji;
+  return type === 2 ? "dog" : type === 3 ? "rabbit" : emoji ? "cat" : null;
+};
+
+/* ---------- Pets over time ---------- */
+
+// Stats lost per hour while time passes (the page doesn't need to be open: the server works it out)
+export const DECAY_PER_HOUR = { hunger: 4, energy: 2, hygiene: 2, happiness: 1.5 };
+export const MIN_STAT = 5;                 // pets never drop below this: nobody's pet "dies" while they're away
+export const MIN_HEALTH = 10;
+export const MAX_AWAY_HOURS = 48;          // time beyond two days isn't counted
+export const MIN_TICK_HOURS = 0.25;        // changes smaller than 15 minutes wait for the next update
+export const WEATHER_HOURS = 6;            // weather only counts for this many hours of an absence (we don't know the past weather)
+
+/* Health follows the other stats. Each "low" stat costs health every hour and a little happiness;
+   when everything is fine, health slowly heals. */
+export const HEALTH_RULES = {
+  lowHunger: 30, lowHygiene: 30, lowEnergy: 20,
+  dropPerLow: 0.8,           // health lost per hour for every low stat
+  happinessPerLow: 1,        // extra happiness lost per hour for every low stat
+  healPerHour: 1,            // health regained per hour when hunger, hygiene, energy and happiness are all 50 or more
+  healMin: 50
+};
+
+/* How each kind of pet reacts to the weather. Numbers are change per hour of exposure.
+   Cats hate rain, dogs love snow, rabbits suffer in the heat. Change them here; no page needs updating. */
+export const WEATHER_INFO = {
+  clear:  { label: "Sunny",  icon: "☀️",  tempC: 28 },
+  cloudy: { label: "Cloudy", icon: "☁️",  tempC: 24 },
+  hot:    { label: "Hot",    icon: "🥵",  tempC: 37 },
+  cold:   { label: "Cold",   icon: "🥶",  tempC: 8 },
+  rain:   { label: "Rainy",  icon: "🌧️", tempC: 22 },
+  storm:  { label: "Stormy", icon: "⛈️", tempC: 21 },
+  snow:   { label: "Snowy",  icon: "❄️",  tempC: -2 }
+};
+
+export const WEATHER_RULES = {
+  cat: {
+    clear:  { happiness: 0.5, health: 0.3 },
+    cloudy: { health: 0.2 },
+    hot:    { happiness: -1,   health: -0.5 },
+    cold:   { happiness: -1,   health: -0.5 },
+    rain:   { happiness: -2 },
+    storm:  { happiness: -3,   health: -0.5 },
+    snow:   { happiness: -1.5, health: -0.5 }
+  },
+  dog: {
+    clear:  { happiness: 1,    health: 0.3 },
+    cloudy: {},
+    hot:    { happiness: -1.5, health: -1 },
+    cold:   { happiness: 0.5,  health: 0.3 },
+    rain:   { happiness: 0.5 },
+    storm:  { happiness: -2.5, health: -0.5 },
+    snow:   { happiness: 2,    health: 0.5 }
+  },
+  rabbit: {
+    clear:  { happiness: 0.5 },
+    cloudy: { happiness: 0.5,  health: 0.3 },
+    hot:    { happiness: -2,   health: -1.5 },
+    cold:   { happiness: -1,   health: -0.5 },
+    rain:   { happiness: -1,   health: -0.5 },
+    storm:  { happiness: -3,   health: -1 },
+    snow:   { happiness: -1.5, health: -1 }
+  }
+};
+
+export const REMINDER_BOOST = 15;          // happiness gained by every pet when you come back from the reminder email
+export const REMINDER_VALID_HOURS = 24;

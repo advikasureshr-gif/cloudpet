@@ -1,6 +1,8 @@
 import { PutCommand, QueryCommand, UpdateCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 import { db, TABLE } from "../db.js";
-import { PET_CATALOG, MAX_PETS, EFFECTS, FOODS, SHOP_ITEMS } from "../catalog.js";
+import { PET_CATALOG, MAX_PETS, EFFECTS, FOODS, SHOP_ITEMS, MIN_TICK_HOURS } from "../catalog.js";
+import { elapsedHours, projectStats } from "./decay.js";
+import { getWeather, ruleFor } from "./weather.js";
 import { AppError } from "../errors.js";
 import { getOrCreateProfile } from "./users.js";
 import { newPetItem, toPetDto, userKey } from "../items.js";
@@ -86,25 +88,34 @@ export async function buyPet(userId, type) {
 
 const clamp = n => Math.max(0, Math.min(100, n));
 
-// Reads the pet, adds the effects, writes it back. If another request changed the pet in between
-// (the "version" no longer matches), it reads again and retries, so no change is lost.
-async function applyEffects(userId, uid, effects) {
+// Reads the pet, lets the time that passed take its toll, adds the effects, writes it back.
+// If another request changed the pet in between (the "version" no longer matches), it reads again and
+// retries, so no change is lost. Used for actions (interaction = true) and for the scheduled update
+// (effects = {}, interaction = false: time passing isn't a visit).
+export async function updatePet(userId, uid, { effects = {}, interaction = true, now = new Date() } = {}) {
   for (let attempt = 0; attempt < 5; attempt++) {
     const pet = await getPet(userId, uid);
     if (!pet) throw new AppError(404, "no-such-pet", "You don't have that pet.");
 
-    const stats = { ...pet.stats };
+    // Only ask for the weather when enough time has passed for it to matter
+    const weather = elapsedHours(pet, now) >= MIN_TICK_HOURS ? await getWeather() : null;
+    const { stats: base, changed } = projectStats(pet, now, weather ? ruleFor(pet.type, weather.condition) : {});
+    if (!interaction && !changed) return pet;
+
+    const stats = { ...base };
     for (const k of Object.keys(effects)) stats[k] = clamp((stats[k] ?? 0) + effects[k]);
+    for (const k of Object.keys(stats)) stats[k] = Math.round(stats[k] * 100) / 100;
 
     const hasVersion = typeof pet.version === "number";
+    const iso = now.toISOString();
     try {
       const res = await db.send(new UpdateCommand({
         TableName: TABLE,
         Key: { pk: userKey(userId), sk: "PET#" + uid },
         ConditionExpression: hasVersion ? "version = :v" : "attribute_not_exists(version)",
-        UpdateExpression: "SET stats = :stats, lastInteraction = :now, version = :next",
+        UpdateExpression: "SET stats = :stats, lastTick = :now, version = :next" + (interaction ? ", lastInteraction = :now" : ""),
         ExpressionAttributeValues: {
-          ":stats": stats, ":now": new Date().toISOString(),
+          ":stats": stats, ":now": iso,
           ":next": (hasVersion ? pet.version : 0) + 1,
           ...(hasVersion ? { ":v": pet.version } : {})
         },
@@ -118,10 +129,18 @@ async function applyEffects(userId, uid, effects) {
   throw new AppError(409, "busy", "That pet is busy right now. Try again.");
 }
 
+const applyEffects = (userId, uid, effects) => updatePet(userId, uid, { effects });
+
+// The pet list with time-passing applied (so the page never shows stale numbers)
+export async function listPetsSettled(userId) {
+  const pets = await listPets(userId);
+  return Promise.all(pets.map(p => updatePet(userId, p.sk.replace("PET#", ""), { interaction: false })));
+}
+
 export async function doAction(userId, uid, type, day) {
   if (!EFFECTS[type]) throw new AppError(400, "unknown-action", "Unknown action.");
   const pet = await applyEffects(userId, uid, EFFECTS[type]);
-  await recordAction(userId, type, day, uid);
+  await recordAction(userId, type, day, uid, pet.type);
   return toPetDto(pet);
 }
 
@@ -135,7 +154,7 @@ export async function feedPet(userId, uid, food, day) {
 
   try {
     const pet = await applyEffects(userId, uid, FOODS[food]);
-    await recordAction(userId, "feed", day, uid);
+    await recordAction(userId, "feed", day, uid, pet.type);
     return toPetDto(pet);
   } catch (err) {
     await giveBack(userId, food);              // the pet wasn't fed, so the food isn't used up

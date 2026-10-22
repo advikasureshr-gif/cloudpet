@@ -1,7 +1,7 @@
 import { GetCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { randomUUID } from "node:crypto";
 import { db, TABLE } from "../db.js";
-import { DAILY_QUESTS, QUEST_BONUS, ACHIEVEMENTS, MAX_PETS } from "../catalog.js";
+import { DAILY_QUESTS, QUEST_BONUS, ACHIEVEMENTS, MAX_PETS, petGroup } from "../catalog.js";
 import { AppError } from "../errors.js";
 import { getOrCreateProfile } from "./users.js";
 import { questKey, userKey } from "../items.js";
@@ -12,7 +12,7 @@ const profileKey = userId => ({ pk: userKey(userId), sk: "PROFILE" });
    attributes (c_feed, claimed_feed, ...) so DynamoDB can add to them atomically. */
 
 // Called after every feed / play / clean / sleep.
-export async function recordAction(userId, kind, day, petUid) {
+export async function recordAction(userId, kind, day, petUid, petType) {
   const now = new Date();
   await db.send(new UpdateCommand({
     TableName: TABLE,
@@ -22,10 +22,11 @@ export async function recordAction(userId, kind, day, petUid) {
     ExpressionAttributeValues: { ":one": 1, ":ttl": Math.floor(now.getTime() / 1000) + 30 * 86400 }
   }));
 
+  const group = petGroup(petType);                    // "cat" / "dog" / "rabbit": feeds the pet discoveries
   await db.send(new UpdateCommand({
     TableName: TABLE,
     Key: profileKey(userId),
-    UpdateExpression: "ADD totalActions :one SET ach_first_steps = :t",
+    UpdateExpression: "ADD totalActions :one SET ach_first_steps = :t" + (group ? `, disc_${group} = :t` : ""),
     ExpressionAttributeValues: { ":one": 1, ":t": true }
   }));
 
@@ -47,7 +48,7 @@ async function getRow(userId, day) {
   return res.Item || {};
 }
 
-async function syncAchievements(userId) {
+export async function syncAchievements(userId) {
   const p = await getOrCreateProfile(userId);
   const flags = {
     ach_first_steps: (p.totalActions || 0) >= 1 || p.ach_first_steps === true,
@@ -84,7 +85,7 @@ export async function getQuests(userId, day) {
   };
 }
 
-async function addCoins(userId, amount) {
+export async function addCoins(userId, amount) {
   const res = await db.send(new UpdateCommand({
     TableName: TABLE,
     Key: profileKey(userId),

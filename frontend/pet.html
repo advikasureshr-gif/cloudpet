@@ -382,9 +382,9 @@ h2 { font-size: 1.15rem; margin: 20px 0 14px; }
       <p class="acc-note" id="accNote"></p>
 
       <div class="weather">
-        <strong>☀️ Sunny • 28°C</strong><br>
+        <strong id="weatherHead">Checking the weather…</strong><br>
         <span id="weatherMsg"></span><br>
-        <strong>Happiness +5 • Energy +3</strong>
+        <strong id="weatherEffect"></strong>
       </div>
     </section>
   </div>
@@ -856,7 +856,6 @@ function renderHeader() {
   $("cleanName").textContent = pet.name;
   $("cleanName2").textContent = pet.name;
   $("foodPetName").textContent = pet.name;
-  $("weatherMsg").textContent = `${pet.name} is enjoying the sunny weather!`;
   setVisual("idle");
   $("traits").innerHTML = Object.entries(pet.traits)
     .map(([label, val]) => barHTML(label, val, "trait"))
@@ -1081,6 +1080,26 @@ document.querySelectorAll("[data-action]").forEach(btn =>
 api.applyProfile(me);
 renderHeader();
 renderStats();
+
+/* How the weather affects THIS pet: the rules live on the server, so each kind of pet reacts differently */
+async function loadWeather() {
+  try {
+    const w = await api.weather();
+    const mine = w.reactions.find(r => r.uid === ownedPet.uid);
+    $("weatherHead").textContent = `${w.icon} ${w.label} • ${w.tempC}°C`;
+    $("weatherMsg").textContent = mine ? mine.message : "";
+
+    const e = mine ? mine.effect : { happiness: 0, health: 0 };
+    const fmt = (label, n) => `${label} ${n > 0 ? "+" : "−"}${Math.abs(n)}/hour`;
+    const parts = [];
+    if (e.happiness) parts.push(fmt("Happiness", e.happiness));
+    if (e.health) parts.push(fmt("Health", e.health));
+    $("weatherEffect").textContent = parts.length ? parts.join(" • ") : "No effect on stats";
+  } catch (err) {
+    $("weatherHead").textContent = "Weather unavailable";
+  }
+}
+loadWeather();
 renderAccessories();
 renderCoins();
 preloadAnimations();

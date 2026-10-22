@@ -3,10 +3,14 @@ import cors from "cors";
 import { requireUser } from "./auth.js";
 import { AppError } from "./errors.js";
 import { PET_CATALOG, MAX_PETS, SHOP_ITEMS } from "./catalog.js";
-import { getOrCreateProfile, touchVisit, setCoins, deleteUser, updateProfile, setTheme } from "./services/users.js";
-import { listPets, buyPet, doAction, feedPet, equipAccessory } from "./services/pets.js";
+import { getOrCreateProfile, touchVisit, setCoins, deleteUser, updateProfile, setTheme, userExists } from "./services/users.js";
+import { listPets, listPetsSettled, buyPet, doAction, feedPet, equipAccessory } from "./services/pets.js";
 import { listInventory, buyItem } from "./services/inventory.js";
 import { getQuests, claimQuest } from "./services/quests.js";
+import { getRewards, claimReward } from "./services/rewards.js";
+import { getWeather, reactionFor, setWeatherOverride } from "./services/weather.js";
+import { returnFromReminder, markReminderSent } from "./services/reminders.js";
+import { tickAllPets } from "./services/tick.js";
 import { toPetDto, dayString } from "./items.js";
 
 // Wraps an async route so a thrown error reaches the error handler below.
@@ -37,6 +41,15 @@ export function createApp() {
     });
   });
 
+  // Dev login helper: does this username exist? (Cognito answers this on AWS, so the route goes away there.)
+  if (process.env.DEV_ROUTES !== "false") {
+    app.get("/api/dev/users/:name", route(async (req, res) => {
+      const name = String(req.params.name || "").toLowerCase();
+      if (!/^[a-z0-9_-]{1,32}$/.test(name)) throw new AppError(400, "bad-username", "Use 1 to 32 letters, numbers, - or _.");
+      res.json({ exists: await userExists(name) });
+    }));
+  }
+
   // Everything below needs a signed-in user.
   app.use("/api", requireUser);
   app.use("/api", (req, _res, next) => {
@@ -54,7 +67,7 @@ export function createApp() {
 
   app.get("/api/pets", route(async (req, res) => {
     await getOrCreateProfile(req.userId);
-    res.json({ pets: (await listPets(req.userId)).map(toPetDto) });
+    res.json({ pets: (await listPetsSettled(req.userId)).map(toPetDto) });
   }));
 
   app.post("/api/shop/pets", route(async (req, res) => {
@@ -105,6 +118,31 @@ export function createApp() {
     res.json({ ...result, ...(await getQuests(req.userId, today(req))) });
   }));
 
+  app.get("/api/rewards", route(async (req, res) => {
+    res.json(await getRewards(req.userId, req.utcOffset));
+  }));
+
+  app.post("/api/rewards/:id/claim", route(async (req, res) => {
+    const result = await claimReward(req.userId, req.params.id, req.utcOffset);
+    res.json({ ...result, ...(await getRewards(req.userId, req.utcOffset)) });
+  }));
+
+  // Today's weather and how each of your pets feels about it (the rules live in catalog.js, not in the pages)
+  app.get("/api/weather", route(async (req, res) => {
+    await getOrCreateProfile(req.userId);         // a brand-new player gets Luna first
+    const weather = await getWeather();
+    const pets = await listPets(req.userId);
+    res.json({
+      condition: weather.condition, label: weather.label, icon: weather.icon, tempC: weather.tempC, source: weather.source,
+      reactions: pets.map(p => ({ uid: p.sk.replace("PET#", ""), name: p.name, ...(({ message, effect }) => ({ message, effect }))(reactionFor(p, weather)) }))
+    });
+  }));
+
+  // The person clicked the link in the reminder email: every pet gets happier (once per email)
+  app.post("/api/reminder/return", route(async (req, res) => {
+    res.json(await returnFromReminder(req.userId));
+  }));
+
   // Development helpers: top up coins or start over. Switched off with DEV_ROUTES=false.
   if (process.env.DEV_ROUTES !== "false") {
     app.post("/api/dev/coins", route(async (req, res) => {
@@ -114,6 +152,14 @@ export function createApp() {
       }
       res.json(profileDto(await setCoins(req.userId, coins)));
     }));
+
+    // Pretend a reminder email was just sent / force the weather / run the scheduled update now
+    app.post("/api/dev/reminder", route(async (req, res) => { await markReminderSent(req.userId); res.json({ ok: true }); }));
+    app.post("/api/dev/weather", route(async (req, res) => {
+      await setWeatherOverride(req.body && req.body.condition ? req.body.condition : null);
+      res.json(await getWeather());
+    }));
+    app.post("/api/dev/tick", route(async (_req, res) => { res.json(await tickAllPets()); }));
 
     app.post("/api/dev/reset", route(async (req, res) => {
       res.json({ deletedItems: await deleteUser(req.userId) });
