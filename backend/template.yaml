@@ -5,8 +5,8 @@ Description: Cloudpet backend (Account A) - HTTP API, Lambda, DynamoDB, EventBri
 Parameters:
   CognitoIssuer:
     Type: String
-    Default: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_PLACEHOLDER
-    Description: Issuer URL of the user pool in Account B (https://cognito-idp.<region>.amazonaws.com/<poolId>)
+    Default: https://accounts.google.com
+    Description: Issuer URL of the user pool in Account B (https://cognito-idp.<region>.amazonaws.com/<poolId>). Must be a REAL issuer (API Gateway checks its discovery endpoint); the Google URL is only a placeholder that no Cognito token matches.
   CognitoAudience:
     Type: String
     Default: placeholder-client-id
@@ -91,25 +91,76 @@ Resources:
         AttributeName: ttl
         Enabled: true
 
-  Api:
-    Type: AWS::Serverless::HttpApi
+  HttpApiMain:
+    Type: AWS::ApiGatewayV2::Api
     Properties:
+      Name: cloudpet
+      ProtocolType: HTTP
       CorsConfiguration:
         AllowOrigins: [!Ref AllowedOrigin]
         AllowMethods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
         AllowHeaders: [authorization, content-type, x-utc-offset-minutes, x-demo-secret]
         MaxAge: 600
+
+  HttpApiStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref HttpApiMain
+      StageName: $default
+      AutoDeploy: true
       DefaultRouteSettings:
         ThrottlingBurstLimit: 40
         ThrottlingRateLimit: 20
-      Auth:
-        DefaultAuthorizer: Cognito
-        Authorizers:
-          Cognito:
-            IdentitySource: $request.header.Authorization
-            JwtConfiguration:
-              issuer: !Ref CognitoIssuer
-              audience: [!Ref CognitoAudience]
+
+  JwtAuthorizer:
+    Type: AWS::ApiGatewayV2::Authorizer
+    Properties:
+      ApiId: !Ref HttpApiMain
+      Name: Cognito
+      AuthorizerType: JWT
+      IdentitySource: ["$request.header.Authorization"]
+      JwtConfiguration:
+        Issuer: !Ref CognitoIssuer
+        Audience: [!Ref CognitoAudience]
+
+  ApiIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref HttpApiMain
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt ApiFunction.Arn
+      PayloadFormatVersion: "2.0"
+
+  RouteHealth:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApiMain
+      RouteKey: GET /api/health
+      AuthorizationType: NONE
+      Target: !Sub integrations/${ApiIntegration}
+  RouteCatalog:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApiMain
+      RouteKey: GET /api/catalog
+      AuthorizationType: NONE
+      Target: !Sub integrations/${ApiIntegration}
+  RouteEverything:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApiMain
+      RouteKey: ANY /{proxy+}
+      AuthorizationType: JWT
+      AuthorizerId: !Ref JwtAuthorizer
+      Target: !Sub integrations/${ApiIntegration}
+
+  ApiInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ApiFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HttpApiMain}/*
 
   ApiFunction:
     Type: AWS::Serverless::Function
@@ -134,27 +185,6 @@ Resources:
             - Effect: Allow
               Action: [bedrock:InvokeModel]
               Resource: "*"
-      Events:
-        Public:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref Api
-            Path: /api/health
-            Method: GET
-            Auth: { Authorizer: NONE }
-        Catalog:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref Api
-            Path: /api/catalog
-            Method: GET
-            Auth: { Authorizer: NONE }
-        Everything:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref Api
-            Path: /{proxy+}
-            Method: ANY
 
   SchedulerFunction:
     Type: AWS::Serverless::Function
@@ -234,7 +264,7 @@ Resources:
 Outputs:
   ApiUrl:
     Description: Give this to person B (frontend API base URL)
-    Value: !Sub https://${Api}.execute-api.${AWS::Region}.amazonaws.com
+    Value: !Sub https://${HttpApiMain}.execute-api.${AWS::Region}.amazonaws.com
   TableName:
     Value: !Ref Table
   ApiFunctionName:

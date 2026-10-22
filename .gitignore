@@ -1,2 +1,7 @@
 node_modules/
+.dynamodb/
 .env
+.aws-sam/
+samconfig.toml
+out.json
+out2.json
