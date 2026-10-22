@@ -1,9 +1,10 @@
 import express from "express";
+import { timingSafeEqual } from "node:crypto";
 import cors from "cors";
 import { requireUser } from "./auth.js";
 import { AppError } from "./errors.js";
 import { PET_CATALOG, MAX_PETS, SHOP_ITEMS } from "./catalog.js";
-import { getOrCreateProfile, touchVisit, setCoins, deleteUser, updateProfile, setTheme, userExists } from "./services/users.js";
+import { seedFromClaims, getOrCreateProfile, touchVisit, setCoins, deleteUser, updateProfile, setTheme, userExists } from "./services/users.js";
 import { BatchWriteCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { db, TABLE } from "./db.js";
 import { listPets, listPetsSettled, buyPet, doAction, feedPet, equipAccessory } from "./services/pets.js";
@@ -63,6 +64,11 @@ export function createApp() {
     const offset = parseInt(req.get("x-utc-offset-minutes"), 10);       // e.g. 330 for India
     req.utcOffset = Number.isFinite(offset) ? Math.max(-840, Math.min(840, offset)) : 0;
     next();
+  });
+
+  // On AWS the Cognito login token carries the player's email and name: use them for the profile (once per player)
+  app.use("/api", (req, _res, next) => {
+    (req.claims ? seedFromClaims(req.userId, req.claims) : Promise.resolve()).then(() => next(), next);
   });
 
   // Coins + profile. Called when a page opens.
@@ -163,9 +169,11 @@ export function createApp() {
     res.json(await returnFromReminder(req.userId));
   }));
 
-  // Development helpers: top up coins or start over. Switched off with DEV_ROUTES=false.
-  if (process.env.DEV_ROUTES !== "false") {
-    app.post("/api/dev/coins", route(async (req, res) => {
+  // Helper routes for testing and demos (coins, weather, fake history, run the reminders, start over).
+  //   /api/dev/*   on your laptop only (DEV_ROUTES; never turned on in AWS)
+  //   /api/demo/*  on AWS, for the live demo: the caller must be signed in AND send the secret in the x-demo-secret header
+  const mountControls = (prefix, guard) => {
+    app.post(prefix + "/coins", guard, route(async (req, res) => {
       const coins = Number(req.body && req.body.coins);
       if (!Number.isInteger(coins) || coins < 0 || coins > 1000000) {
         throw new AppError(400, "bad-coins", "coins must be a whole number from 0 to 1000000.");
@@ -174,16 +182,16 @@ export function createApp() {
     }));
 
     // Pretend a reminder email was just sent / force the weather / run the scheduled update now
-    app.post("/api/dev/reminder", route(async (req, res) => { await markReminderSent(req.userId); res.json({ ok: true }); }));
-    app.post("/api/dev/weather", route(async (req, res) => {
+    app.post(prefix + "/reminder", guard, route(async (req, res) => { await markReminderSent(req.userId); res.json({ ok: true }); }));
+    app.post(prefix + "/weather", guard, route(async (req, res) => {
       await setWeatherOverride(req.body && req.body.condition ? req.body.condition : null);
       res.json(await getWeather());
     }));
-    app.post("/api/dev/tick", route(async (_req, res) => { res.json(await tickEverything()); }));
+    app.post(prefix + "/tick", guard, route(async (_req, res) => { res.json(await tickEverything()); }));
 
     // Fake a few weeks of visit history so the prediction has something to learn from.
     // minutesFromNow: when the "usual" weekday visit should be (default: in 60 minutes). Weekends are 3 hours later.
-    app.post("/api/dev/seed-history", route(async (req, res) => {
+    app.post(prefix + "/seed-history", guard, route(async (req, res) => {
       const profile = await getOrCreateProfile(req.userId);
       const offset = Number.isFinite(profile.utcOffset) ? profile.utcOffset : req.utcOffset;
       const ahead = Number(req.body && req.body.minutesFromNow);
@@ -208,20 +216,31 @@ export function createApp() {
 
     // Run the reminder cycle for just this player (what the scheduler does for everyone).
     // { at: "<time>" } pretends it is that time, so a demo can jump straight to "30 minutes before the usual visit".
-    app.post("/api/dev/reminders-run", route(async (req, res) => {
+    app.post(prefix + "/reminders-run", guard, route(async (req, res) => {
       const at = req.body && req.body.at ? new Date(req.body.at) : new Date();
       if (isNaN(at)) throw new AppError(400, "bad-time", "at must be a date, like 2026-10-23T14:00:00Z");
       res.json(await runReminderCycle(await getOrCreateProfile(req.userId), at));
     }));
-    app.get("/api/dev/outbox", route(async (req, res) => {
+    app.get(prefix + "/outbox", guard, route(async (req, res) => {
       const profile = await getOrCreateProfile(req.userId);
       res.json({ emails: getOutbox(profile.email) });
     }));
 
-    app.post("/api/dev/reset", route(async (req, res) => {
+    app.post(prefix + "/reset", guard, route(async (req, res) => {
       res.json({ deletedItems: await deleteUser(req.userId) });
     }));
-  }
+  };
+
+  const noGuard = (_req, _res, next) => next();
+  const demoGuard = (req, _res, next) => {
+    const given = Buffer.from(String(req.get("x-demo-secret") || ""));
+    const secret = Buffer.from(String(process.env.DEMO_SECRET || ""));
+    const ok = given.length === secret.length && timingSafeEqual(given, secret);
+    next(ok ? undefined : new AppError(403, "forbidden", "Wrong or missing demo secret."));
+  };
+
+  if (process.env.DEV_ROUTES !== "false") mountControls("/api/dev", noGuard);
+  if (process.env.DEMO_SECRET) mountControls("/api/demo", demoGuard);
 
   app.use((_req, _res, next) => next(new AppError(404, "not-found", "No such route.")));
 

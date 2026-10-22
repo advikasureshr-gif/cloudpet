@@ -1,0 +1,241 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Cloudpet backend (Account A) - HTTP API, Lambda, DynamoDB, EventBridge Scheduler, SES
+
+Parameters:
+  CognitoIssuer:
+    Type: String
+    Default: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_PLACEHOLDER
+    Description: Issuer URL of the user pool in Account B (https://cognito-idp.<region>.amazonaws.com/<poolId>)
+  CognitoAudience:
+    Type: String
+    Default: placeholder-client-id
+    Description: App client ID from Account B
+  AllowedOrigin:
+    Type: String
+    Default: "*"
+    Description: CloudFront site URL from Account B (no trailing slash). "*" until B delivers it.
+  AppUrl:
+    Type: String
+    Default: http://localhost:8080/
+    Description: Link placed in reminder emails (the CloudFront site URL)
+  MailFrom:
+    Type: String
+    Default: ""
+    Description: SES-verified sender address
+  ChatProvider:
+    Type: String
+    Default: groq
+    AllowedValues: [mock, groq, openai, bedrock]
+  GroqApiKey:
+    Type: String
+    NoEcho: true
+    Default: ""
+  GroqModel:
+    Type: String
+    Default: openai/gpt-oss-20b
+  DemoSecret:
+    Type: String
+    NoEcho: true
+    Default: ""
+    Description: Enables /api/demo/* helper routes (needs header x-demo-secret). Empty disables them.
+  TimeScale:
+    Type: String
+    Default: "1"
+    Description: Game-time speed-up for demos (1 = real time)
+  AlarmEmail:
+    Type: String
+    Default: ""
+    Description: Optional email for Lambda-error alarms
+
+Conditions:
+  HasAlarmEmail: !Not [!Equals [!Ref AlarmEmail, ""]]
+
+Globals:
+  Function:
+    Runtime: nodejs20.x
+    MemorySize: 1024
+    Architectures: [arm64]
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref Table
+        AUTH_MODE: cognito
+        DEV_ROUTES: "false"
+        CHAT_PROVIDER: !Ref ChatProvider
+        GROQ_API_KEY: !Ref GroqApiKey
+        GROQ_MODEL: !Ref GroqModel
+        MAIL_PROVIDER: ses
+        MAIL_FROM: !Ref MailFrom
+        APP_URL: !Ref AppUrl
+        CORS_ORIGIN: !Ref AllowedOrigin
+        DEMO_SECRET: !Ref DemoSecret
+        TIME_SCALE: !Ref TimeScale
+        DEFAULT_LAT: "13.08"
+        DEFAULT_LON: "80.27"
+        CHAT_DAILY_LIMIT: "30"
+
+Resources:
+  Table:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: pk, AttributeType: S }
+        - { AttributeName: sk, AttributeType: S }
+      KeySchema:
+        - { AttributeName: pk, KeyType: HASH }
+        - { AttributeName: sk, KeyType: RANGE }
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+
+  Api:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins: [!Ref AllowedOrigin]
+        AllowMethods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
+        AllowHeaders: [authorization, content-type, x-utc-offset-minutes, x-demo-secret]
+        MaxAge: 600
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 40
+        ThrottlingRateLimit: 20
+      Auth:
+        DefaultAuthorizer: Cognito
+        Authorizers:
+          Cognito:
+            IdentitySource: $request.header.Authorization
+            JwtConfiguration:
+              issuer: !Ref CognitoIssuer
+              audience: [!Ref CognitoAudience]
+
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Format: cjs
+        Target: node20
+        Minify: false
+        EntryPoints: [src/lambda.js]
+        External: ["@aws-sdk/*"]
+    Properties:
+      CodeUri: .
+      Handler: lambda.handler
+      Timeout: 25
+      Policies:
+        - DynamoDBCrudPolicy: { TableName: !Ref Table }
+        - Statement:
+            - Effect: Allow
+              Action: [ses:SendEmail, ses:SendRawEmail]
+              Resource: "*"
+            - Effect: Allow
+              Action: [bedrock:InvokeModel]
+              Resource: "*"
+      Events:
+        Public:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref Api
+            Path: /api/health
+            Method: GET
+            Auth: { Authorizer: NONE }
+        Catalog:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref Api
+            Path: /api/catalog
+            Method: GET
+            Auth: { Authorizer: NONE }
+        Everything:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref Api
+            Path: /{proxy+}
+            Method: ANY
+
+  SchedulerFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Format: cjs
+        Target: node20
+        EntryPoints: [src/scheduler.js]
+        External: ["@aws-sdk/*"]
+    Properties:
+      CodeUri: .
+      Handler: scheduler.handler
+      Timeout: 300
+      Policies:
+        - DynamoDBCrudPolicy: { TableName: !Ref Table }
+        - Statement:
+            - Effect: Allow
+              Action: [ses:SendEmail, ses:SendRawEmail]
+              Resource: "*"
+      Events:
+        Every15Min:
+          Type: ScheduleV2
+          Properties:
+            ScheduleExpression: rate(15 minutes)
+
+  ApiLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${ApiFunction}
+      RetentionInDays: 7
+  SchedulerLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${SchedulerFunction}
+      RetentionInDays: 7
+
+  AlarmTopic:
+    Type: AWS::SNS::Topic
+  AlarmSubscription:
+    Type: AWS::SNS::Subscription
+    Condition: HasAlarmEmail
+    Properties:
+      TopicArn: !Ref AlarmTopic
+      Protocol: email
+      Endpoint: !Ref AlarmEmail
+
+  ApiErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: API Lambda errors
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions: [{ Name: FunctionName, Value: !Ref ApiFunction }]
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 3
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlarmTopic]
+  SchedulerErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Scheduler Lambda errors
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions: [{ Name: FunctionName, Value: !Ref SchedulerFunction }]
+      Statistic: Sum
+      Period: 900
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlarmTopic]
+
+Outputs:
+  ApiUrl:
+    Description: Give this to person B (frontend API base URL)
+    Value: !Sub https://${Api}.execute-api.${AWS::Region}.amazonaws.com
+  TableName:
+    Value: !Ref Table
+  ApiFunctionName:
+    Value: !Ref ApiFunction

@@ -1,0 +1,12 @@
+{
+  "version": "2.0",
+  "routeKey": "ANY /{proxy+}",
+  "rawPath": "/api/me",
+  "rawQueryString": "",
+  "headers": { "accept": "application/json", "x-utc-offset-minutes": "330" },
+  "requestContext": {
+    "http": { "method": "GET", "path": "/api/me", "protocol": "HTTP/1.1", "sourceIp": "127.0.0.1" },
+    "authorizer": { "jwt": { "claims": { "sub": "11111111-2222-3333-4444-555555555555", "email": "you@example.com", "cognito:username": "smoketest" }, "scopes": null } }
+  },
+  "isBase64Encoded": false
+}

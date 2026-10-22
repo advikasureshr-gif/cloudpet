@@ -23,9 +23,11 @@
     "@aws-sdk/lib-dynamodb": "^3.600.0",
     "cors": "^2.8.5",
     "express": "^4.21.0",
-    "ml-random-forest": "^2.1.0"
+    "ml-random-forest": "^2.1.0",
+    "serverless-http": "^4.0.0"
   },
   "devDependencies": {
-    "dynalite": "^4.0.0"
+    "dynalite": "^4.0.0",
+    "esbuild": "^0.28.2"
   }
 }

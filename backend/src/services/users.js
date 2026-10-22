@@ -127,3 +127,27 @@ export async function userExists(userId) {
   const res = await db.send(new GetCommand({ TableName: TABLE, Key: { pk: userKey(userId), sk: "PROFILE" } }));
   return Boolean(res.Item);
 }
+
+// First request of a Cognito player: copy the email and name from their login token into the profile,
+// so reminder emails work without the player typing anything again. Remembered per Lambda container.
+const seeded = new Set();
+export async function seedFromClaims(userId, claims) {
+  if (seeded.has(userId)) return;
+  const profile = await getOrCreateProfile(userId);
+
+  if (!profile.email && typeof claims.email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(claims.email)) {
+    const name = String(claims.name || claims["cognito:username"] || claims.email.split("@")[0]).slice(0, 40);
+    try {
+      await db.send(new UpdateCommand({
+        TableName: TABLE, Key: { pk: userKey(userId), sk: "PROFILE" },
+        ConditionExpression: "attribute_not_exists(email)",
+        UpdateExpression: "SET email = :e, #n = :n",
+        ExpressionAttributeNames: { "#n": "name" },
+        ExpressionAttributeValues: { ":e": claims.email, ":n": name }
+      }));
+    } catch (err) {
+      if (!isConditionFailure(err)) throw err;
+    }
+  }
+  seeded.add(userId);
+}
