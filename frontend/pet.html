@@ -12,6 +12,9 @@
   --card-soft: #f8effc;
   --purple: #8c4fd6;
   --pink: #ff6fa5;
+  --bg-deep: #2c1250;
+  --bg-mid: #6a2f8f;
+  --bg-light: #d68ecb;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -20,7 +23,7 @@ body {
   font-family: 'Nunito', 'Segoe UI', system-ui, sans-serif;
   min-height: 100vh;
   color: var(--ink);
-  background: linear-gradient(160deg, #2c1250 0%, #6a2f8f 45%, #d68ecb 100%);
+  background: linear-gradient(160deg, var(--bg-deep) 0%, var(--bg-mid) 45%, var(--bg-light) 100%);
   background-attachment: fixed;
   padding-bottom: 40px;
 }
@@ -114,14 +117,40 @@ main { width: min(1080px, 92%); margin: 30px auto; }
   place-items: center;
   border-radius: 22px;
   background: #ead8f5;
+  background: color-mix(in srgb, var(--purple) 16%, white);
   overflow: hidden;
 }
 .visual img { width: 75%; height: 75%; object-fit: contain; image-rendering: pixelated; }
+.sprite-sheet { position: relative; overflow: hidden; height: min(256px, 90%); aspect-ratio: 5 / 4; max-width: 90%; }   /* one-frame window (80x64 frames) */
+.sprite-strip {
+  position: absolute; top: 0; left: 0; height: 100%;
+  width: calc(var(--frames, 1) * 100%);            /* the whole sheet: `frames` windows wide */
+  background-size: 100% 100%; background-repeat: no-repeat;
+  image-rendering: pixelated; will-change: transform;
+}
 .emoji-fallback { font-size: 9rem; line-height: 1; }
 h1 { font-size: 2rem; margin-top: 12px; }
 h2 { font-size: 1.15rem; margin: 20px 0 14px; }
 .card > h2:first-child { margin-top: 0; }
 .info { color: var(--ink-soft); margin: 5px 0; }
+.petcard { position: relative; }
+.wearing-badge {
+  position: absolute; top: 38px; right: 38px; z-index: 2;
+  width: 46px; height: 46px; border-radius: 50%;
+  display: none; place-items: center; font-size: 1.6rem;
+  background: #fff; box-shadow: 0 4px 10px rgba(44, 18, 80, 0.25);
+}
+.wearing-badge.show { display: grid; }
+.acc-list { display: flex; flex-wrap: wrap; gap: 10px; }
+.acc-btn {
+  border: 2px solid var(--purple); background: #fff; color: var(--purple);
+  border-radius: 999px; padding: 8px 14px; font-weight: 800; cursor: pointer; font-size: 0.88rem;
+}
+.acc-btn:hover:not(:disabled) { background: var(--purple); color: #fff; }
+.acc-btn.on { background: var(--purple); color: #fff; }
+.acc-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.acc-note { color: var(--ink-soft); font-size: 0.85rem; margin-top: 10px; }
+.acc-note a { color: var(--purple); font-weight: 800; text-decoration: underline; }
 .mood {
   display: inline-block;
   background: #fff;
@@ -136,7 +165,7 @@ h2 { font-size: 1.15rem; margin: 20px 0 14px; }
 .trait, .stat { margin: 13px 0; }
 .row { display: flex; justify-content: space-between; font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; }
 .bar { height: 10px; background: rgba(255, 255, 255, 0.55); border-radius: 20px; overflow: hidden; }
-.fill { height: 100%; background: linear-gradient(90deg, #7a438f, #e987b3); border-radius: 20px; transition: width 0.3s; }
+.fill { height: 100%; background: linear-gradient(90deg, var(--purple), var(--pink)); border-radius: 20px; transition: width 0.3s; }
 
 /* ---------- Actions ---------- */
 .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -202,6 +231,7 @@ h2 { font-size: 1.15rem; margin: 20px 0 14px; }
   place-items: center;
 }
 .cleanpet img { width: 82%; height: 82%; object-fit: contain; image-rendering: pixelated; }
+.cleanpet .sprite-sheet { height: min(160px, 82%); }
 .cleanpet .emoji-fallback { font-size: 6rem; }
 .soap {
   position: absolute;
@@ -285,6 +315,10 @@ h2 { font-size: 1.15rem; margin: 20px 0 14px; }
 }
 .toast.show { transform: translate(-50%, 0); opacity: 1; }
 
+/* Slide the strip left by exactly its own width in `frames` equal steps:
+   every step is one whole frame, so the window never shows part of a neighbour. */
+@keyframes spriteStrip { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+
 /* ---------- Responsive ---------- */
 @media (max-width: 800px) {
   .navbar { flex-wrap: wrap; gap: 10px; padding: 14px 18px; }
@@ -311,7 +345,7 @@ h2 { font-size: 1.15rem; margin: 20px 0 14px; }
     <a href="profile.html">Profile</a>
   </div>
   <div class="nav-right">
-    <div class="coin-pill" id="coinDisplay">🪙 0</div>
+    <div class="coin-pill" id="coinDisplay">🪙 …</div>
     <div class="avatar">L</div>
     <a href="login.html" class="logout-link">Logout</a>
   </div>
@@ -321,7 +355,8 @@ h2 { font-size: 1.15rem; margin: 20px 0 14px; }
   <a class="back" href="home.html">← Back to Home</a>
 
   <div class="grid">
-    <section class="card">
+    <section class="card petcard">
+      <div class="wearing-badge" id="wearingBadge" aria-hidden="true"></div>
       <div class="visual" id="visual"></div>
       <h1 id="petName"></h1>
       <p class="info" id="petInfo"></p>
@@ -342,10 +377,14 @@ h2 { font-size: 1.15rem; margin: 20px 0 14px; }
         <button class="action" data-action="sleep">😴 Sleep</button>
       </div>
 
+      <h2>🎀 Accessories</h2>
+      <div class="acc-list" id="accList"></div>
+      <p class="acc-note" id="accNote"></p>
+
       <div class="weather">
-        <strong>☀️ Sunny • 28°C</strong><br>
+        <strong id="weatherHead">Checking the weather…</strong><br>
         <span id="weatherMsg"></span><br>
-        <strong>Happiness +5 • Energy +3</strong>
+        <strong id="weatherEffect"></strong>
       </div>
     </section>
   </div>
@@ -378,7 +417,9 @@ h2 { font-size: 1.15rem; margin: 20px 0 14px; }
 
 <div class="toast" id="toast" role="status"></div>
 
-<script>
+<script src="js/state.js"></script>
+<script src="js/api.js"></script>
+<script type="module">
 /* =====================================================
    Config
    ===================================================== */
@@ -399,8 +440,8 @@ function catAnim(color) {
     feed: dir + "eat_food_stand_front.gif",
     play: dir + "run_right.gif",
     jump: dir + "jump_right.gif",
-    goToBed: dir + "go_to_bed.gif",
-    sleep: dir + "sleep_2_left_front.gif",
+    goToBed: dir + "go_to_bed_.gif",
+    sleep: dir + "sleep.gif",
     sitting: dir + "tail_wag_sit_front.gif"      // clean mini-game pose
   };
 }
@@ -412,7 +453,20 @@ const PETS = {
     traits: { "❤️ Affection": 85, "🎾 Playfulness": 60, "😼 Independence": 90 },
     stats: { health: 85, hunger: 72, happiness: 80, energy: 65, hygiene: 75 },
     msgs: { feed: "🐟 Luna enjoyed the treat!", play: "🧶 Luna chased the yarn!", sleep: "😴 Luna curled up for a nap!" },
-    anim: null
+    /* Luna uses PNG sprite sheets (64 x 64 per frame), not GIF files. */
+    spriteSheets: {
+      idle: { src: "../animation_packs/FREE_Cat 2D Pixel Art/FREE_Cat 2D Pixel Art/Sprites/IDLE.png", frames: 8, fps: 7 },
+      feed: { src: "../animation_packs/FREE_Cat 2D Pixel Art/FREE_Cat 2D Pixel Art/Sprites/IDLE.png", frames: 8, fps: 7 },
+      sitting: { src: "../animation_packs/FREE_Cat 2D Pixel Art/FREE_Cat 2D Pixel Art/Sprites/IDLE.png", frames: 8, fps: 7 },
+      sleep: { src: "../animation_packs/FREE_Cat 2D Pixel Art/FREE_Cat 2D Pixel Art/Sprites/IDLE.png", frames: 8, fps: 7 },
+      walk: { src: "../animation_packs/FREE_Cat 2D Pixel Art/FREE_Cat 2D Pixel Art/Sprites/WALK.png", frames: 12, fps: 10 },
+      run: { src: "../animation_packs/FREE_Cat 2D Pixel Art/FREE_Cat 2D Pixel Art/Sprites/RUN.png", frames: 8, fps: 12 },
+      jump: { src: "../animation_packs/FREE_Cat 2D Pixel Art/FREE_Cat 2D Pixel Art/Sprites/JUMP.png", frames: 3, fps: 8 },
+      runningJump: { src: "../animation_packs/FREE_Cat 2D Pixel Art/FREE_Cat 2D Pixel Art/Sprites/RUNNING JUMP.png", frames: 3, fps: 8 },
+      attack: { src: "../animation_packs/FREE_Cat 2D Pixel Art/FREE_Cat 2D Pixel Art/Sprites/ATTACK 1.png", frames: 8, fps: 10 },
+      hurt: { src: "../animation_packs/FREE_Cat 2D Pixel Art/FREE_Cat 2D Pixel Art/Sprites/HURT.png", frames: 4, fps: 8 }
+    },
+    sequences: { play: [["run", 850], ["jump", 500], ["run", 850]] }
   },
   2: {
     name: "Shadow", species: "German Shepherd", discovery: "dog", age: "1 year old", emoji: "🐕",
@@ -475,11 +529,9 @@ const PETS = {
 };
 
 /* Stat changes for each action (feed is food-based, clean is the mini-game) */
-const EFFECTS = {
-  play:  { happiness: 10, energy: -10, hunger: -5 },
-  sleep: { energy: 20, hunger: -5 }
-};
+/* What each action does to the stats is decided by the server (backend/src/catalog.js). */
 
+/* Food icons only: the stat changes are decided by the server. */
 const FOODS = {
   Apple:  { emoji: "🍎", hunger: 15, happiness: 3 },
   Fish:   { emoji: "🐟", hunger: 20, happiness: 5 },
@@ -529,28 +581,94 @@ function toast(msg) {
    State
    ===================================================== */
 const params = new URLSearchParams(window.location.search);
-const requestedId = params.get("id");
-const id = PETS[requestedId] ? requestedId : "1";   // never save state under an invalid id
-const pet = PETS[id];
-const STATE_KEY = "cloudpet_pet_state_" + id;
 
-/* Merge with defaults so old/partial saves can't produce missing or unknown stats */
-const state = { ...pet.stats };
-const saved = readJSON(STATE_KEY, {});
-for (const k in state) {
-  if (typeof saved[k] === "number") state[k] = clamp(saved[k]);
+/* Everything about the player comes from the server: coins, which pets they own, their stats, their inventory. */
+let me, ownedList, inventory;
+
+try {
+  const [profile, petData, inventoryData] = await Promise.all([api.me(), api.pets(), api.inventory()]);
+  me = profile;
+  ownedList = petData.pets.filter(p => PETS[p.type]);
+  inventory = inventoryData.items;
+} catch (err) {
+  api.showError(err);
+  await new Promise(() => {});          // nothing to show without the server: stop here
 }
+
+/* ?pet=<uid> picks one owned pet. An old-style ?id=<kind> opens the first owned pet of that kind. */
+const requestedUid = params.get("pet");
+const requestedKind = params.get("id");
+const ownedPet = ownedList.find(p => p.uid === requestedUid)
+              || (requestedUid === null ? ownedList.find(p => String(p.type) === requestedKind) : null);
+
+/* Not owned (or no such pet): back to Home. */
+if (!ownedPet) {
+  window.location.replace("home.html");
+  await new Promise(() => {});
+}
+
+const id = String(ownedPet.type);                                   // which kind: picks animations and traits
+const pet = { ...PETS[id], name: ownedPet.name };
+const state = { ...ownedPet.stats };                                // the server's numbers (kept between 0 and 100)
 
 let currentAnimation = "idle";
+let busy = false;                                                   // one action at a time
 
-function saveState() {
-  writeJSON(STATE_KEY, state);
-  window.dispatchEvent(new Event("cloudpetStateUpdated"));
+/* Copy a pet the server sent back into what's on screen */
+function takeFromServer(updated) {
+  Object.assign(ownedPet, updated);
+  Object.assign(state, updated.stats);
 }
 
-function completeQuest(name) {
-  setFlag("cloudpet_quest_" + name, "true");
-  setFlag("cloudpet_quest_date", getToday());
+/* =====================================================
+   Accessories
+   ===================================================== */
+const ACCESSORIES = {
+  "Cute Hat": { icon: "🎩", happiness: 10 },
+  "Pink Bow": { icon: "🎀", happiness: 8 }
+};
+
+const ownedQty = name => (inventory.find(i => i.name === name) || { qty: 0 }).qty;
+const wornByOthers = name => ownedList.filter(p => p.uid !== ownedPet.uid && p.equipped === name).length;
+const wornAccessory = () => (ACCESSORIES[ownedPet.equipped] ? ownedPet.equipped : null);
+
+async function setAccessory(name) {                                 // name = null takes it off
+  try {
+    const result = await api.equip(ownedPet.uid, name);
+    takeFromServer(result.pet);
+  } catch (err) {
+    toast("⚠️ " + err.message);
+  }
+  renderAccessories();
+  renderStats();
+}
+
+function renderAccessories() {
+  const current = wornAccessory();
+  const names = inventory.filter(i => ACCESSORIES[i.name]).map(i => i.name);
+  const list = $("accList");
+  list.innerHTML = "";
+
+  names.forEach(name => {
+    const b = document.createElement("button");
+    const isOn = name === current;
+    const free = ownedQty(name) - wornByOthers(name) > 0;
+    b.className = "acc-btn" + (isOn ? " on" : "");
+    b.textContent = isOn ? `${ACCESSORIES[name].icon} ${name} · Take off` : `${ACCESSORIES[name].icon} ${name}`;
+    b.disabled = !isOn && !free;
+    b.title = !isOn && !free ? "Another pet is wearing your only one" : "";
+    b.addEventListener("click", () => setAccessory(isOn ? null : name));
+    list.appendChild(b);
+  });
+
+  const badge = $("wearingBadge");
+  badge.textContent = current ? ACCESSORIES[current].icon : "";
+  badge.classList.toggle("show", !!current);
+
+  $("accNote").innerHTML = names.length === 0
+    ? `${pet.name} has nothing to wear yet. <a href="shop.html">Visit the shop →</a>`
+    : current ? `${pet.name} is wearing ${ACCESSORIES[current].icon} ${current}: 😊 +${ACCESSORIES[current].happiness} happiness.`
+              : `Pick one for ${pet.name} to wear and get a happiness boost.`;
 }
 
 /* =====================================================
@@ -590,9 +708,51 @@ function scheduleLoop(src, ms) {
   }, ms);
 }
 
+/* Sprite sheets are one horizontal strip of square frames (64 x 64 each). */
+function makeSpriteSheet(kind, target) {
+  const sheet = pet.spriteSheets && pet.spriteSheets[kind];
+  if (!sheet) return false;
+
+  const el = document.createElement("div");
+  el.className = "sprite-sheet";
+  el.setAttribute("role", "img");
+  el.setAttribute("aria-label", `${pet.name} ${kind}`);
+
+  const strip = document.createElement("div");
+  strip.className = "sprite-strip";
+  strip.style.backgroundImage = `url("${sheet.src}")`;
+  el.appendChild(strip);
+  target.appendChild(el);
+
+  strip.style.setProperty("--frames", sheet.frames);
+  strip.style.animation = `spriteStrip ${sheet.frames / sheet.fps}s steps(${sheet.frames}) infinite`;
+
+  /* Frames in these sheets are 80 x 64, not square: size the window from the image itself
+     so each step shows exactly one whole frame. */
+  const probe = new Image();
+  probe.onload = () => {
+    const fw = probe.naturalWidth / sheet.frames;
+    el.style.aspectRatio = `${fw} / ${probe.naturalHeight}`;
+    if (!Number.isInteger(fw)) console.warn(`${sheet.src}: ${probe.naturalWidth}px is not divisible by ${sheet.frames} frames - check the frames value.`);
+  };
+  probe.src = sheet.src;
+  return true;
+}
+
 function setVisual(kind) {
   const box = $("visual");
+  const sprite = pet.spriteSheets && pet.spriteSheets[kind];
   const src = pet.anim && pet.anim[kind];
+
+  if (sprite) {
+    if (kind === currentKind && box.querySelector(".sprite-sheet")) return;   // already showing it
+    clearTimeout(loopTimer);
+    currentKind = kind;
+    petImg = null;
+    box.innerHTML = "";
+    makeSpriteSheet(kind, box);
+    return;
+  }
 
   if (!src) {
     clearTimeout(loopTimer);
@@ -696,25 +856,27 @@ function renderHeader() {
   $("cleanName").textContent = pet.name;
   $("cleanName2").textContent = pet.name;
   $("foodPetName").textContent = pet.name;
-  $("weatherMsg").textContent = `${pet.name} is enjoying the sunny weather!`;
   setVisual("idle");
   $("traits").innerHTML = Object.entries(pet.traits)
     .map(([label, val]) => barHTML(label, val, "trait"))
     .join("");
 }
 
+function shownStat(k) {                          // what the bars display (accessory boost included)
+  const worn = wornAccessory();
+  return k === "happiness" && worn ? clamp(state.happiness + ACCESSORIES[worn].happiness) : state[k];
+}
+
 function renderStats() {
   $("stats").innerHTML = Object.keys(state)
-    .map(k => barHTML(`${STAT_ICONS[k]} ${k[0].toUpperCase() + k.slice(1)}`, Math.round(state[k]), "stat"))
+    .map(k => barHTML(`${STAT_ICONS[k]} ${k[0].toUpperCase() + k.slice(1)}`, Math.round(shownStat(k)), "stat"))
     .join("");
-  const h = state.happiness;
+  const h = shownStat("happiness");
   $("mood").textContent = h >= 75 ? "😊 Happy" : h >= 45 ? "😐 Okay" : "🥺 Needs attention";
 }
 
 function renderCoins() {
-  const raw = localStorage.getItem("cloudpet_coins");
-  const coins = raw === null || isNaN(Number(raw)) ? DEFAULT_COINS : Number(raw);
-  $("coinDisplay").textContent = "🪙 " + coins;
+  $("coinDisplay").textContent = "🪙 " + me.coins;
 }
 
 /* =====================================================
@@ -739,54 +901,52 @@ document.addEventListener("keydown", e => {
 /* =====================================================
    Actions: play / sleep
    ===================================================== */
-function applyEffects(effects) {
-  for (const k in effects) {
-    if (k in state) state[k] = clamp(state[k] + effects[k]);
+async function act(type) {
+  if (busy) return;
+  busy = true;
+
+  try {
+    const result = await api.action(ownedPet.uid, type);          // the server changes the stats and counts the quest
+    takeFromServer(result.pet);
+
+    if (pet.discovery) setFlag("cloudpet_discovery_" + pet.discovery, "true");
+
+    showAnimation(type, type !== "sleep");   // sleeping stays until the next action
+    renderStats();
+    toast(pet.msgs[type]);
+  } catch (err) {
+    api.showError(err);
+  } finally {
+    busy = false;
   }
-}
-
-function act(type) {
-  applyEffects(EFFECTS[type]);
-  saveState();
-
-  if (type === "play") completeQuest("play");
-  if (pet.discovery) setFlag("cloudpet_discovery_" + pet.discovery, "true");
-
-  showAnimation(type, type !== "sleep");   // sleeping stays until the next action
-  renderStats();
-  toast(pet.msgs[type]);
 }
 
 /* =====================================================
    Feeding
    ===================================================== */
-function getInventory() {
-  const inv = readJSON("cloudpet_inventory", []);
-  return Array.isArray(inv) ? inv : [];
-}
-
-function foodStart() {
+async function foodStart() {
+  try {
+    inventory = (await api.inventory()).items;        // maybe you just bought food in the shop
+  } catch (err) {
+    api.showError(err);
+  }
   renderFoodOptions();
   openOverlay("foodOverlay");
 }
 
 function renderFoodOptions() {
   const container = $("foodOptions");
-  const counts = {};
-  for (const item of getInventory()) {
-    if (item && FOODS[item.name]) counts[item.name] = (counts[item.name] || 0) + 1;
-  }
+  const foods = inventory.filter(item => FOODS[item.name] && item.qty > 0);
 
-  const names = Object.keys(counts);
-  const hasFood = names.length > 0;
+  const hasFood = foods.length > 0;
   $("noFoodMessage").hidden = hasFood;
   $("shopFoodButton").hidden = hasFood;
 
-  container.innerHTML = names.map(name => `
-    <button class="food-option" data-food="${name}">
-      <span class="food-icon">${FOODS[name].emoji}</span>
-      <span class="food-name">${name}</span>
-      <span class="food-count">× ${counts[name]}</span>
+  container.innerHTML = foods.map(item => `
+    <button class="food-option" data-food="${item.name}">
+      <span class="food-icon">${FOODS[item.name].emoji}</span>
+      <span class="food-name">${item.name}</span>
+      <span class="food-count">× ${item.qty}</span>
     </button>`).join("");
 }
 
@@ -795,27 +955,26 @@ $("foodOptions").addEventListener("click", e => {
   if (btn) feedWithFood(btn.dataset.food);
 });
 
-function feedWithFood(foodName) {
-  const inventory = getInventory();
-  const index = inventory.findIndex(item => item && item.name === foodName);
+async function feedWithFood(foodName) {
+  if (busy) return;
+  busy = true;
 
-  if (index === -1 || !FOODS[foodName]) {
-    toast("🍽️ You don't have that food!");
-    renderFoodOptions();
-    return;
+  try {
+    const result = await api.feed(ownedPet.uid, foodName);        // the server uses up one food and feeds the pet
+    takeFromServer(result.pet);
+
+    closeOverlay("foodOverlay");
+    showAnimation("feed");
+    renderStats();
+    toast(`${foodName} served! 🐾 ${pet.name} enjoyed the meal! 💕`);
+  } catch (err) {
+    toast(err.code === "no-food" ? "🍽️ You don't have that food!" : "⚠️ " + err.message);
+  } finally {
+    busy = false;
   }
 
-  inventory.splice(index, 1);
-  writeJSON("cloudpet_inventory", inventory);
-
-  applyEffects({ hunger: FOODS[foodName].hunger, happiness: FOODS[foodName].happiness });
-  saveState();
-  completeQuest("feed");
-
-  closeOverlay("foodOverlay");
-  showAnimation("feed");
-  renderStats();
-  toast(`${foodName} served! 🐾 ${pet.name} enjoyed the meal! 💕`);
+  try { inventory = (await api.inventory()).items; } catch (err) { /* the next open refreshes it */ }
+  renderFoodOptions();
 }
 
 /* =====================================================
@@ -829,13 +988,18 @@ let dragging = false, offsetX = 0, offsetY = 0, cleaned = false;
 let cleanLoopTimer = null;
 
 function cleanStart() {
-  const kind = pet.anim && pet.anim.sitting ? "sitting" : "idle";
+  const kind = (pet.spriteSheets && pet.spriteSheets.sitting) ? "sitting" : (pet.anim && pet.anim.sitting ? "sitting" : "idle");
   const src = pet.anim && pet.anim[kind];
-  cleanpet.innerHTML = src
-    ? `<img src="${src}" alt="${pet.name}">`
-    : `<div class="emoji-fallback">${pet.emoji}</div>`;
+  cleanpet.innerHTML = "";
+  if (pet.spriteSheets && pet.spriteSheets[kind]) {
+    makeSpriteSheet(kind, cleanpet);
+  } else if (src) {
+    cleanpet.innerHTML = `<img src="${src}" alt="${pet.name}">`;
+  } else {
+    cleanpet.innerHTML = `<div class="emoji-fallback">${pet.emoji}</div>`;
+  }
 
-  /* Same fix as the main view: restart the GIF before its empty last frame */
+  /* Restart GIF loops where needed; sprite sheets loop via CSS. */
   clearInterval(cleanLoopTimer);
   const loopMs = pet.animLoopMs && pet.animLoopMs[kind];
   const img = cleanpet.querySelector("img");
@@ -880,12 +1044,12 @@ function checkSoapCollision() {
   if (Math.hypot(dx, dy) > b.width / 2) return;
 
   cleaned = true;
-  completeQuest("clean");
-  applyEffects({ hygiene: 15, happiness: 3 });
-  saveState();
   spawnBubbles(b);
-  renderStats();
   toast(`🫧 ${pet.name} is squeaky clean!`);
+
+  api.action(ownedPet.uid, "clean")                  // the server adds the hygiene and counts the quest
+    .then(result => { takeFromServer(result.pet); renderStats(); })
+    .catch(err => api.showError(err));
 
   setTimeout(() => closeOverlay("cleanOverlay"), 1300);
 }
@@ -913,8 +1077,30 @@ const ACTIONS = { feed: foodStart, clean: cleanStart, play: () => act("play"), s
 document.querySelectorAll("[data-action]").forEach(btn =>
   btn.addEventListener("click", () => ACTIONS[btn.dataset.action]()));
 
+api.applyProfile(me);
 renderHeader();
 renderStats();
+
+/* How the weather affects THIS pet: the rules live on the server, so each kind of pet reacts differently */
+async function loadWeather() {
+  try {
+    const w = await api.weather();
+    const mine = w.reactions.find(r => r.uid === ownedPet.uid);
+    $("weatherHead").textContent = `${w.icon} ${w.label} • ${w.tempC}°C`;
+    $("weatherMsg").textContent = mine ? mine.message : "";
+
+    const e = mine ? mine.effect : { happiness: 0, health: 0 };
+    const fmt = (label, n) => `${label} ${n > 0 ? "+" : "−"}${Math.abs(n)}/hour`;
+    const parts = [];
+    if (e.happiness) parts.push(fmt("Happiness", e.happiness));
+    if (e.health) parts.push(fmt("Health", e.health));
+    $("weatherEffect").textContent = parts.length ? parts.join(" • ") : "No effect on stats";
+  } catch (err) {
+    $("weatherHead").textContent = "Weather unavailable";
+  }
+}
+loadWeather();
+renderAccessories();
 renderCoins();
 preloadAnimations();
 scheduleBlink();

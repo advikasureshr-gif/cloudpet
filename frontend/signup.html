@@ -153,7 +153,7 @@ input:focus {
         <div class="form-group">
             <label for="username">Username</label>
             <input type="text" id="username" name="username"
-                   placeholder="Choose a username" required>
+                   placeholder="Letters, numbers, - and _" maxlength="32" autocomplete="username" required>
         </div>
 
         <div class="form-group">
@@ -186,31 +186,14 @@ input:focus {
     <label>Choose your character</label>
 
     <div class="signup-avatar-options">
-
-        <button type="button" class="signup-avatar-option selected"
-                data-avatar="👩🏻">👩🏻</button>
-
-        <button type="button" class="signup-avatar-option"
-                data-avatar="👨🏻">👨🏻</button>
-
-        <button type="button" class="signup-avatar-option"
-                data-avatar="🐱">🐱</button>
-
-        <button type="button" class="signup-avatar-option"
-                data-avatar="🐶">🐶</button>
-
-        <button type="button" class="signup-avatar-option"
-                data-avatar="🐰">🐰</button>
-
-        <button type="button" class="signup-avatar-option"
-                data-avatar="🦊">🦊</button>
-
-        <button type="button" class="signup-avatar-option"
-                data-avatar="🐹">🐹</button>
-
-        <button type="button" class="signup-avatar-option"
-                data-avatar="🐢">🐢</button>
-
+        <button type="button" class="signup-avatar-option selected" data-avatar="👩🏻" aria-label="Character 1">👩🏻</button>
+        <button type="button" class="signup-avatar-option" data-avatar="👨🏻" aria-label="Character 2">👨🏻</button>
+        <button type="button" class="signup-avatar-option" data-avatar="🐱" aria-label="Character 3">🐱</button>
+        <button type="button" class="signup-avatar-option" data-avatar="🐈‍⬛" aria-label="Character 4">🐈‍⬛</button>
+        <button type="button" class="signup-avatar-option" data-avatar="🐶" aria-label="Character 5">🐶</button>
+        <button type="button" class="signup-avatar-option" data-avatar="🐕" aria-label="Character 6">🐕</button>
+        <button type="button" class="signup-avatar-option" data-avatar="🐰" aria-label="Character 7">🐰</button>
+        <button type="button" class="signup-avatar-option" data-avatar="🌸" aria-label="Character 8">🌸</button>
     </div>
 
 </div>
@@ -225,6 +208,7 @@ input:focus {
     </p>
 </main>
 
+<script src="js/api.js"></script>
 <script>
 
 let selectedAvatar = "👩🏻";
@@ -258,7 +242,7 @@ document.querySelectorAll(".signup-avatar-option")
 // ===============================
 
 document.getElementById("signupForm")
-    .addEventListener("submit", function(event) {
+    .addEventListener("submit", async function(event) {
 
         event.preventDefault();
 
@@ -309,42 +293,51 @@ if (!emailPattern.test(email)) {
             confirmPasswordInput.focus();
             return;
         }
+        if (!/^[a-zA-Z0-9_-]{1,32}$/.test(username)) {
+            message.textContent =
+                "Usernames use letters, numbers, - and _ only (up to 32).";
+            usernameInput.focus();
+            return;
+        }
+
         // ===============================
-        // CREATE NEW PROFILE
+        // CREATE NEW ACCOUNT (on the server)
         // ===============================
 
-        const profile = {
-            name: username,
-            username: username,
-            email: email,
-            avatar: selectedAvatar
-        };
+        const button = document.querySelector(".signup-button");
+        button.disabled = true;
 
+        try {
+            if (await api.userExists(username)) {
+                message.textContent =
+                    "That username is taken. Try another one.";
+                usernameInput.focus();
+                button.disabled = false;
+                return;
+            }
 
-        localStorage.setItem(
-            "cloudpet_profile",
-            JSON.stringify(profile)
-        );
+            // Prototype only: the password is checked by Amazon Cognito
+            // once the app moves to AWS.
+            api.setUser(username.toLowerCase());
+            await api.updateMe({
+                name: username,
+                email: email,
+                avatar: selectedAvatar
+            });
 
+            localStorage.setItem("cloudpet_logged_in", "true");
 
-        // Automatically log the new user in
-        localStorage.setItem(
-            "cloudpet_logged_in",
-            "true"
-        );
+            message.style.color = "#5a286e";
+            message.textContent =
+                "Account created successfully! 🐾";
 
-
-        message.textContent =
-            "Account created successfully! 🐾";
-
-
-        // Go directly to Home
-        setTimeout(() => {
-
-            window.location.href =
-                "home.html";
-
-        }, 500);
+            setTimeout(() => {
+                window.location.href = "home.html";
+            }, 500);
+        } catch (err) {
+            message.textContent = err.message;
+            button.disabled = false;
+        }
 
     });
 
