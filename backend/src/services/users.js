@@ -40,12 +40,13 @@ export async function getOrCreateProfile(userId) {
 }
 
 // Remember when the player was last here (the pet-over-time logic uses this later).
-export async function touchVisit(userId) {
+export async function touchVisit(userId, utcOffset) {
+  const hasOffset = Number.isFinite(utcOffset);                 // the browser tells us its clock, so reminders use the player's own time
   await db.send(new UpdateCommand({
     TableName: TABLE,
     Key: { pk: userKey(userId), sk: "PROFILE" },
-    UpdateExpression: "SET lastVisit = :now",
-    ExpressionAttributeValues: { ":now": new Date().toISOString() }
+    UpdateExpression: "SET lastVisit = :now" + (hasOffset ? ", utcOffset = :off" : ""),
+    ExpressionAttributeValues: { ":now": new Date().toISOString(), ...(hasOffset ? { ":off": utcOffset } : {}) }
   }));
 }
 

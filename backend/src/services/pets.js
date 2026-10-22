@@ -100,7 +100,7 @@ export async function updatePet(userId, uid, { effects = {}, interaction = true,
     // Only ask for the weather when enough time has passed for it to matter
     const weather = elapsedHours(pet, now) >= MIN_TICK_HOURS ? await getWeather() : null;
     const { stats: base, changed } = projectStats(pet, now, weather ? ruleFor(pet.type, weather.condition) : {});
-    if (!interaction && !changed) return pet;
+    if (!interaction && !changed && Object.keys(effects).length === 0) return pet;
 
     const stats = { ...base };
     for (const k of Object.keys(effects)) stats[k] = clamp((stats[k] ?? 0) + effects[k]);

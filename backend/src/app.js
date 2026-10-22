@@ -4,13 +4,19 @@ import { requireUser } from "./auth.js";
 import { AppError } from "./errors.js";
 import { PET_CATALOG, MAX_PETS, SHOP_ITEMS } from "./catalog.js";
 import { getOrCreateProfile, touchVisit, setCoins, deleteUser, updateProfile, setTheme, userExists } from "./services/users.js";
+import { BatchWriteCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { db, TABLE } from "./db.js";
 import { listPets, listPetsSettled, buyPet, doAction, feedPet, equipAccessory } from "./services/pets.js";
 import { listInventory, buyItem } from "./services/inventory.js";
 import { getQuests, claimQuest } from "./services/quests.js";
 import { getRewards, claimReward } from "./services/rewards.js";
 import { getWeather, reactionFor, setWeatherOverride } from "./services/weather.js";
 import { returnFromReminder, markReminderSent } from "./services/reminders.js";
-import { tickAllPets } from "./services/tick.js";
+import { tickEverything } from "./services/tick.js";
+import { predictNext } from "./services/prediction.js";
+import { makeHistory } from "./services/synthetic.js";
+import { getOutbox, clockText } from "./services/mailer.js";
+import { runReminderCycle } from "./services/reminders.js";
 import { chatWithPet } from "./services/chat.js";
 import { toPetDto, dayString } from "./items.js";
 
@@ -62,7 +68,7 @@ export function createApp() {
   // Coins + profile. Called when a page opens.
   app.get("/api/me", route(async (req, res) => {
     const profile = await getOrCreateProfile(req.userId);
-    await touchVisit(req.userId);
+    await touchVisit(req.userId, req.utcOffset);
     res.json(profileDto(profile));
   }));
 
@@ -144,6 +150,14 @@ export function createApp() {
     res.json(await chatWithPet(req.userId, req.body || {}, today(req)));
   }));
 
+  // When will you visit next? (learned from your own activity)
+  app.get("/api/prediction", route(async (req, res) => {
+    const profile = await getOrCreateProfile(req.userId);
+    const offset = Number.isFinite(profile.utcOffset) ? profile.utcOffset : req.utcOffset;
+    const pred = await predictNext(req.userId, new Date(), offset);
+    res.json({ ...pred, usualTime: pred.nextCheckInAt ? clockText(new Date(pred.nextCheckInAt), offset) : null, emailOn: Boolean(profile.email) });
+  }));
+
   // The person clicked the link in the reminder email: every pet gets happier (once per email)
   app.post("/api/reminder/return", route(async (req, res) => {
     res.json(await returnFromReminder(req.userId));
@@ -165,7 +179,44 @@ export function createApp() {
       await setWeatherOverride(req.body && req.body.condition ? req.body.condition : null);
       res.json(await getWeather());
     }));
-    app.post("/api/dev/tick", route(async (_req, res) => { res.json(await tickAllPets()); }));
+    app.post("/api/dev/tick", route(async (_req, res) => { res.json(await tickEverything()); }));
+
+    // Fake a few weeks of visit history so the prediction has something to learn from.
+    // minutesFromNow: when the "usual" weekday visit should be (default: in 60 minutes). Weekends are 3 hours later.
+    app.post("/api/dev/seed-history", route(async (req, res) => {
+      const profile = await getOrCreateProfile(req.userId);
+      const offset = Number.isFinite(profile.utcOffset) ? profile.utcOffset : req.utcOffset;
+      const ahead = Number(req.body && req.body.minutesFromNow);
+      const target = new Date(Date.now() + (Number.isFinite(ahead) ? ahead : 60) * 60000 + offset * 60000);
+      const weekdayMin = Math.floor((target.getUTCHours() * 60 + target.getUTCMinutes()) / 30) * 30 + 15;     // middle of that half hour
+      const times = makeHistory({ offsetMin: offset, weekdayMin, weekendMin: (weekdayMin + 180) % 1440, days: 21, jitterMin: 4 });
+
+      for (let i = 0; i < times.length; i += 25) {
+        await db.send(new BatchWriteCommand({
+          RequestItems: { [TABLE]: times.slice(i, i + 25).map((t, k) => ({
+            PutRequest: { Item: { pk: `USER#${req.userId}`, sk: `EVENT#${t.toISOString()}#s${i + k}`, kind: "seed", ttl: Math.floor(t.getTime() / 1000) + 90 * 86400 } }
+          })) }
+        }));
+      }
+      await db.send(new UpdateCommand({
+        TableName: TABLE, Key: { pk: `USER#${req.userId}`, sk: "PROFILE" },
+        UpdateExpression: "REMOVE nextCheckInAt, reminderAt, reminderFor, neglectFor"
+      }));
+      const prediction = await predictNext(req.userId, new Date(), offset);
+      res.json({ events: times.length, prediction });
+    }));
+
+    // Run the reminder cycle for just this player (what the scheduler does for everyone).
+    // { at: "<time>" } pretends it is that time, so a demo can jump straight to "30 minutes before the usual visit".
+    app.post("/api/dev/reminders-run", route(async (req, res) => {
+      const at = req.body && req.body.at ? new Date(req.body.at) : new Date();
+      if (isNaN(at)) throw new AppError(400, "bad-time", "at must be a date, like 2026-10-23T14:00:00Z");
+      res.json(await runReminderCycle(await getOrCreateProfile(req.userId), at));
+    }));
+    app.get("/api/dev/outbox", route(async (req, res) => {
+      const profile = await getOrCreateProfile(req.userId);
+      res.json({ emails: getOutbox(profile.email) });
+    }));
 
     app.post("/api/dev/reset", route(async (req, res) => {
       res.json({ deletedItems: await deleteUser(req.userId) });

@@ -51,6 +51,11 @@
   .weather-info .temp { font-size: 1rem; color: var(--ink-soft); font-weight: 700; }
   .weather-note { margin-top: 8px; font-size: 0.85rem; color: var(--ink-soft); max-width: 190px; text-align: right; }
 
+  .predict-card { display: flex; align-items: center; gap: 16px; margin-bottom: 36px; }
+  .predict-icon { font-size: 2.2rem; line-height: 1; }
+  .predict-title { font-weight: 800; font-size: 1.05rem; }
+  .predict-sub { color: var(--ink-soft); font-size: 0.85rem; margin-top: 2px; }
+
   .quest-card .quest-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
   .quest-coins { font-size: 1.25rem; font-weight: 800; }
   .quest-title { font-weight: 800; margin: 6px 0 4px; font-size: 1rem; }
@@ -143,6 +148,14 @@
       </div>
     </div>
 
+    <div class="card predict-card" id="predictCard">
+      <div class="predict-icon">🔮</div>
+      <div>
+        <div class="predict-title" id="predictTitle">Learning when you visit…</div>
+        <div class="predict-sub" id="predictSub"></div>
+      </div>
+    </div>
+
     <h2 class="section-title">My Pets 🐾 <span class="pet-count" id="petCount"></span></h2>
     <div class="pet-grid" id="petGrid"></div>
   </main>
@@ -198,6 +211,28 @@
       } catch (err) { /* the weather card just keeps its last text */ }
     }
 
+    // When your pets expect you (learned from your own activity by a Random Forest on the server)
+    async function renderPrediction() {
+      try {
+        const p = await api.prediction();
+        const title = document.getElementById("predictTitle");
+        const sub = document.getElementById("predictSub");
+
+        if (p.method === "none") {
+          title.textContent = "Your pets are still learning when you usually visit";
+          sub.textContent = "Care for them a few days in a row and they'll start to expect you.";
+          return;
+        }
+
+        const when = new Date(p.nextCheckInAt);
+        const time = when.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+        const day = when.toDateString() === new Date().toDateString() ? "today" : "tomorrow";
+        title.textContent = "Your pets expect you " + day + " around " + time;
+        sub.textContent = (p.emailOn ? "A reminder email goes out about 30 minutes before. " : "Add your email on the Profile page to get a reminder. ") +
+          "Learned from " + p.basedOnEvents + " visits" + (p.method === "forest" ? " by a Random Forest." : " (simple average so far).");
+      } catch (err) { /* the card keeps its default text */ }
+    }
+
     // Came here from the reminder email link (home.html?from=reminder): every pet gets happier, once per email
     async function welcomeBack() {
       if (new URLSearchParams(location.search).get("from") !== "reminder") return;
@@ -214,6 +249,7 @@
     async function renderHome() {
       await welcomeBack();
       renderWeather();
+      renderPrediction();
       try {
         const [me, petData, quests, catalog] = await Promise.all([api.me(), api.pets(), api.quests(), api.catalog()]);
 

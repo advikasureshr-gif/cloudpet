@@ -142,3 +142,9 @@ export const WEATHER_RULES = {
 
 export const REMINDER_BOOST = 15;          // happiness gained by every pet when you come back from the reminder email
 export const REMINDER_VALID_HOURS = 24;
+
+/* ---------- Check-in prediction, reminder emails and neglect ---------- */
+
+export const REMINDER_LEAD_MIN = 30;        // the email goes out about this long before the predicted visit
+export const NEGLECT_GRACE_HOURS = 2;       // if you haven't shown up this long after your usual time...
+export const NEGLECT_PENALTY = 10;          // ...every pet loses this much happiness (once per missed visit)
