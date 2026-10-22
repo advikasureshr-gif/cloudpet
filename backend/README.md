@@ -119,3 +119,11 @@ The server builds the prompt from the pet's real stats, accessory, weather react
 - Cost guards: 500-character messages, 250-token replies, 6 turns of history, 30 messages per player per day (`CHAT_DAILY_LIMIT`). A failed Bedrock call isn't counted.
 
 Try it for real once: `CHAT_PROVIDER=bedrock npm start`.
+
+## Check-in prediction, reminder email, neglect (Day 5)
+
+- Every action is logged (`EVENT#` rows). `src/services/prediction.js` cuts days into 48 half-hour slots, learns from the last 28 days with a **Random Forest** (`ml-random-forest`, trained per player in about 0.2 s, no model file), and picks the next likely visit. With little history it falls back to the average visit time; with almost none it says "no idea yet". Run `npm run ml:report` to see how well it does against the simple average.
+- `GET /api/prediction` shows the prediction (the home page card uses it).
+- On every scheduled update (`tickEverything`) each player gets: a prediction stored on their profile, a **reminder email about 30 minutes before** the predicted visit (once per visit, not if they're already here), and if they never showed up within 2 hours of the usual time **every pet loses 10 happiness** (once per missed visit). The email's button opens `home.html?from=reminder`, which gives the +15 happiness.
+- Email: `MAIL_PROVIDER=console` prints the email in the terminal (and keeps it for `GET /api/dev/outbox`); `MAIL_PROVIDER=ses` sends through Amazon SES (`MAIL_FROM` must be a verified address; in the SES sandbox the recipient must be verified too).
+- Demo helpers (dev only): `POST /api/dev/seed-history` makes up 3 weeks of habits so the prediction has something to learn (usual visit in about 60 minutes); `POST /api/dev/reminders-run {"at": "<time>"}` runs the cycle as if it were that time; `GET /api/dev/outbox` lists the emails.
