@@ -12,8 +12,11 @@
     "dev": "node --watch src/server.js",
     "test": "node --test"
   },
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.600.0",
     "@aws-sdk/client-dynamodb": "^3.600.0",
     "@aws-sdk/lib-dynamodb": "^3.600.0",
     "cors": "^2.8.5",

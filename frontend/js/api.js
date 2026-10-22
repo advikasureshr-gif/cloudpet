@@ -68,6 +68,7 @@
     inventory: () => request("GET", "/inventory"),
     buyItem: name => request("POST", "/shop/items", { name }),
 
+    chat: (petUid, message, history) => request("POST", "/chat", { petUid, message, history }),
     weather: () => request("GET", "/weather"),
     reminderReturn: () => request("POST", "/reminder/return"),
 

@@ -11,6 +11,7 @@ import { getRewards, claimReward } from "./services/rewards.js";
 import { getWeather, reactionFor, setWeatherOverride } from "./services/weather.js";
 import { returnFromReminder, markReminderSent } from "./services/reminders.js";
 import { tickAllPets } from "./services/tick.js";
+import { chatWithPet } from "./services/chat.js";
 import { toPetDto, dayString } from "./items.js";
 
 // Wraps an async route so a thrown error reaches the error handler below.
@@ -136,6 +137,11 @@ export function createApp() {
       condition: weather.condition, label: weather.label, icon: weather.icon, tempC: weather.tempC, source: weather.source,
       reactions: pets.map(p => ({ uid: p.sk.replace("PET#", ""), name: p.name, ...(({ message, effect }) => ({ message, effect }))(reactionFor(p, weather)) }))
     });
+  }));
+
+  // Ask the AI companion about one of your pets
+  app.post("/api/chat", route(async (req, res) => {
+    res.json(await chatWithPet(req.userId, req.body || {}, today(req)));
   }));
 
   // The person clicked the link in the reminder email: every pet gets happier (once per email)
