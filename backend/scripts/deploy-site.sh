@@ -19,6 +19,10 @@ CLIENT="$(out UserPoolClientId)"; URL="$(out SiteUrl)"
 STAGE="$(mktemp -d)"
 trap 'rm -rf "$STAGE"' EXIT
 rsync -a --exclude backend --exclude node_modules --exclude '.git*' --exclude '*.py' --exclude '*.png.bak' "$SITE_DIR"/ "$STAGE"/
+# The pet sprites live next to the website folder (../animation_packs); serve them from the site root
+if [ ! -d "$STAGE/animation_packs" ] && [ -d "$SITE_DIR/../animation_packs" ]; then
+  rsync -a "$SITE_DIR/../animation_packs" "$STAGE"/
+fi
 mkdir -p "$STAGE/js"
 cat > "$STAGE/js/config.js" <<CFG
 window.CLOUDPET_CONFIG = { apiBase: "$API", region: "$REGION", userPoolId: "$POOL", clientId: "$CLIENT" };

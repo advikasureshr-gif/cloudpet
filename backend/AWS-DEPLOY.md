@@ -16,6 +16,13 @@ sam deploy --guided --profile cloudpet-a --stack-name cloudpet --region us-east-
 Prompts: Enter for defaults; "Save arguments" = y; config file name = Enter (do not type y); confirm changeset = y.
 First deploy takes ~8 min (CloudFront). Later redeploys: `sam build && sam deploy --profile cloudpet-a`.
 
+## If AWS says "account must be verified" for CloudFront (new accounts)
+Open a support case (Support > Create case > Account and billing) and include the error text, then deploy meanwhile with
+`EnableCloudFront=false EnableMonitoring=false`: the site is served straight from S3 over HTTP (`http://<bucket>.s3-website-us-east-1.amazonaws.com`).
+When AWS verifies the account, redeploy with `EnableCloudFront=true` (and `EnableMonitoring=true`) and run `./scripts/deploy-site.sh` again.
+A stack that failed on first create (ROLLBACK_COMPLETE) must be deleted first:
+`aws cloudformation delete-stack --stack-name cloudpet --profile cloudpet-a --region us-east-1`
+
 ## Put the website online (after every frontend change)
 ```
 export AWS_PROFILE=cloudpet-a
