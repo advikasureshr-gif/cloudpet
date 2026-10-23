@@ -208,6 +208,7 @@ input:focus {
     </p>
 </main>
 
+<script src="js/config.js"></script>
 <script src="js/api.js"></script>
 <script>
 
@@ -308,22 +309,27 @@ if (!emailPattern.test(email)) {
         button.disabled = true;
 
         try {
-            if (await api.userExists(username)) {
-                message.textContent =
-                    "That username is taken. Try another one.";
-                usernameInput.focus();
-                button.disabled = false;
-                return;
-            }
+            if (api.cognito) {
+                // Creates the Amazon Cognito account and logs in
+                await api.signUp(email, password, username);
+                await api.updateMe({ name: username, email: email, avatar: selectedAvatar });
+            } else {
+                if (await api.userExists(username)) {
+                    message.textContent =
+                        "That username is taken. Try another one.";
+                    usernameInput.focus();
+                    button.disabled = false;
+                    return;
+                }
 
-            // Prototype only: the password is checked by Amazon Cognito
-            // once the app moves to AWS.
-            api.setUser(username.toLowerCase());
-            await api.updateMe({
-                name: username,
-                email: email,
-                avatar: selectedAvatar
-            });
+                // Local development only: no password check
+                api.setUser(username.toLowerCase());
+                await api.updateMe({
+                    name: username,
+                    email: email,
+                    avatar: selectedAvatar
+                });
+            }
 
             localStorage.setItem("cloudpet_logged_in", "true");
 

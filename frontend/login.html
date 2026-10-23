@@ -89,8 +89,14 @@ input:focus { border-color: #e6a5d4; box-shadow: 0 0 0 3px rgba(230,165,212,.2);
     </p>
 </main>
 
+<script src="js/config.js"></script>
 <script src="js/api.js"></script>
 <script>
+if (api.cognito) {
+  document.querySelector('label[for="email"]').textContent = "Email";
+  const f = document.getElementById("email");
+  f.type = "email"; f.placeholder = "Enter your email"; f.autocomplete = "email";
+}
 const USERNAME_PATTERN = /^[a-zA-Z0-9_-]{1,32}$/;
 
 document.getElementById("loginForm")
@@ -110,24 +116,33 @@ document.getElementById("loginForm")
       return;
     }
 
-    if (!USERNAME_PATTERN.test(username)) {
+    if (!api.cognito && !USERNAME_PATTERN.test(username)) {
       message.textContent = "Usernames use letters, numbers, - and _ only.";
+      return;
+    }
+
+    if (api.cognito && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username)) {
+      message.textContent = "Please enter the email address you signed up with.";
       return;
     }
 
     button.disabled = true;
 
     try {
-      // Prototype only: the server checks the account exists. Password checking is done by
-      // Amazon Cognito once the app moves to AWS.
-      if (!(await api.userExists(username))) {
-        message.textContent = "Username not found. Please sign up first.";
-        button.disabled = false;
-        return;
+      if (api.cognito) {
+        // Amazon Cognito checks the email and password
+        await api.signIn(username, password);
+      } else {
+        // Local development: the server only checks that the account exists
+        if (!(await api.userExists(username))) {
+          message.textContent = "Username not found. Please sign up first.";
+          button.disabled = false;
+          return;
+        }
+        api.setUser(username.toLowerCase());
+        localStorage.setItem("cloudpet_logged_in", "true");
       }
 
-      api.setUser(username.toLowerCase());
-      localStorage.setItem("cloudpet_logged_in", "true");
       const me = await api.me();
 
       message.style.color = "#5a286e";
