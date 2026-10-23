@@ -161,7 +161,8 @@
   </main>
 
   <script src="js/state.js"></script>
-  <script src="js/api.js"></script>
+  <script src="js/config.js"></script>
+<script src="js/api.js"></script>
   <script>
     function statOf(pet, key, fallback) {
       return pet.stats && typeof pet.stats[key] === "number" ? Math.round(pet.stats[key]) : fallback;

@@ -30,8 +30,15 @@ const call = async (user, method, path, body, headers = {}) => {
   });
   return { status: res.status, body: await res.json() };
 };
-const noon = { "X-Utc-Offset-Minutes": String(-new Date().getUTCHours() * 60 + 12 * 60) };   // local time = 12:00 today
-const midnight = { "X-Utc-Offset-Minutes": String(-new Date().getUTCHours() * 60 + 23 * 60) }; // local time = 23:xx
+// A valid UTC offset (-12h..+14h) that makes the player's local clock read the given hour right now
+const offsetFor = hour => {
+  let m = (hour - new Date().getUTCHours()) * 60;
+  while (m > 840) m -= 1440;
+  while (m < -720) m += 1440;
+  return { "X-Utc-Offset-Minutes": String(m) };
+};
+const noon = offsetFor(12);       // local time = 12:xx
+const midnight = offsetFor(23);   // local time = 23:xx
 const find = (b, id) => [...b.achievements, ...b.discoveries].find(r => r.id === id);
 
 test("rewards start locked and can't be claimed", async () => {
