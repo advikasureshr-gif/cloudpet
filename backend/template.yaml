@@ -3,22 +3,6 @@ Transform: AWS::Serverless-2016-10-31
 Description: Cloudpet backend (Account A) - HTTP API, Lambda, DynamoDB, EventBridge Scheduler, SES
 
 Parameters:
-  CognitoIssuer:
-    Type: String
-    Default: https://accounts.google.com
-    Description: Issuer URL of the user pool in Account B (https://cognito-idp.<region>.amazonaws.com/<poolId>). Must be a REAL issuer (API Gateway checks its discovery endpoint); the Google URL is only a placeholder that no Cognito token matches.
-  CognitoAudience:
-    Type: String
-    Default: placeholder-client-id
-    Description: App client ID from Account B
-  AllowedOrigin:
-    Type: String
-    Default: "*"
-    Description: CloudFront site URL from Account B (no trailing slash). "*" until B delivers it.
-  AppUrl:
-    Type: String
-    Default: http://localhost:8080/
-    Description: Link placed in reminder emails (the CloudFront site URL)
   MailFrom:
     Type: String
     Default: ""
@@ -66,8 +50,8 @@ Globals:
         GROQ_MODEL: !Ref GroqModel
         MAIL_PROVIDER: ses
         MAIL_FROM: !Ref MailFrom
-        APP_URL: !Ref AppUrl
-        CORS_ORIGIN: !Ref AllowedOrigin
+        APP_URL: !Sub https://${SiteDistribution.DomainName}/home.html
+        CORS_ORIGIN: !Sub https://${SiteDistribution.DomainName}
         DEMO_SECRET: !Ref DemoSecret
         TIME_SCALE: !Ref TimeScale
         DEFAULT_LAT: "13.08"
@@ -97,7 +81,7 @@ Resources:
       Name: cloudpet
       ProtocolType: HTTP
       CorsConfiguration:
-        AllowOrigins: [!Ref AllowedOrigin]
+        AllowOrigins: [!Sub "https://${SiteDistribution.DomainName}", "http://localhost:8080"]
         AllowMethods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
         AllowHeaders: [authorization, content-type, x-utc-offset-minutes, x-demo-secret]
         MaxAge: 600
@@ -120,8 +104,8 @@ Resources:
       AuthorizerType: JWT
       IdentitySource: ["$request.header.Authorization"]
       JwtConfiguration:
-        Issuer: !Ref CognitoIssuer
-        Audience: [!Ref CognitoAudience]
+        Issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}
+        Audience: [!Ref UserPoolClient]
 
   ApiIntegration:
     Type: AWS::ApiGatewayV2::Integration
@@ -161,6 +145,121 @@ Resources:
       FunctionName: !Ref ApiFunction
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HttpApiMain}/*
+
+  # ---------- Login: Cognito (self sign-up works, no email code needed for the demo) ----------
+  PreSignUpFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      Timeout: 5
+      MemorySize: 128
+      InlineCode: |
+        exports.handler = async (event) => {
+          event.response.autoConfirmUser = true;
+          event.response.autoVerifyEmail = true;
+          return event;
+        };
+
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      UserPoolName: cloudpet-users
+      UsernameAttributes: [email]
+      AutoVerifiedAttributes: [email]
+      UsernameConfiguration: { CaseSensitive: false }
+      Schema:
+        - { Name: email, Required: true, Mutable: true }
+        - { Name: name, Required: false, Mutable: true }
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: false
+          RequireUppercase: false
+          RequireNumbers: false
+          RequireSymbols: false
+      LambdaConfig:
+        PreSignUp: !GetAtt PreSignUpFunction.Arn
+
+  PreSignUpPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref PreSignUpFunction
+      Principal: cognito-idp.amazonaws.com
+      SourceArn: !GetAtt UserPool.Arn
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref UserPool
+      ClientName: cloudpet-web
+      GenerateSecret: false
+      ExplicitAuthFlows: [ALLOW_USER_PASSWORD_AUTH, ALLOW_REFRESH_TOKEN_AUTH]
+      PreventUserExistenceErrors: ENABLED
+      IdTokenValidity: 60
+      AccessTokenValidity: 60
+      RefreshTokenValidity: 30
+      TokenValidityUnits: { IdToken: minutes, AccessToken: minutes, RefreshToken: days }
+
+  # ---------- Website: private S3 bucket behind CloudFront ----------
+  SiteBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 }
+
+  SiteOAC:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub ${AWS::StackName}-oac
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  SiteDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: Cloudpet website
+        DefaultRootObject: home.html
+        PriceClass: PriceClass_100
+        HttpVersion: http2
+        Origins:
+          - Id: site
+            DomainName: !GetAtt SiteBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt SiteOAC.Id
+            S3OriginConfig: { OriginAccessIdentity: "" }
+        DefaultCacheBehavior:
+          TargetOriginId: site
+          ViewerProtocolPolicy: redirect-to-https
+          Compress: true
+          CachePolicyId: 4135ea2d-6df8-48a9-b4ea-2d3c8cd5f5c1   # CachingDisabled: edits show up immediately
+
+  SiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref SiteBucket
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal: { Service: cloudfront.amazonaws.com }
+            Action: s3:GetObject
+            Resource: !Sub ${SiteBucket.Arn}/*
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub arn:aws:cloudfront::${AWS::AccountId}:distribution/${SiteDistribution}
 
   ApiFunction:
     Type: AWS::Serverless::Function
@@ -261,6 +360,18 @@ Resources:
       TreatMissingData: notBreaching
       AlarmActions: [!Ref AlarmTopic]
 
+  Dashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub ${AWS::StackName}-overview
+      DashboardBody: !Sub |
+        {"widgets":[
+          {"type":"metric","x":0,"y":0,"width":12,"height":6,"properties":{"title":"API requests, 4xx and 5xx","region":"${AWS::Region}","stat":"Sum","period":300,"metrics":[["AWS/ApiGateway","Count","ApiId","${HttpApiMain}"],[".","4xx",".","."],[".","5xx",".","."]]}},
+          {"type":"metric","x":12,"y":0,"width":12,"height":6,"properties":{"title":"API latency (ms)","region":"${AWS::Region}","stat":"Average","period":300,"metrics":[["AWS/ApiGateway","Latency","ApiId","${HttpApiMain}"]]}},
+          {"type":"metric","x":0,"y":6,"width":12,"height":6,"properties":{"title":"Lambda invocations and errors","region":"${AWS::Region}","stat":"Sum","period":300,"metrics":[["AWS/Lambda","Invocations","FunctionName","${ApiFunction}"],[".","Errors",".","."],["AWS/Lambda","Invocations","FunctionName","${SchedulerFunction}"],[".","Errors",".","."]]}},
+          {"type":"metric","x":12,"y":6,"width":12,"height":6,"properties":{"title":"DynamoDB read and write units","region":"${AWS::Region}","stat":"Sum","period":300,"metrics":[["AWS/DynamoDB","ConsumedReadCapacityUnits","TableName","${Table}"],[".","ConsumedWriteCapacityUnits",".","."]]}}
+        ]}
+
 Outputs:
   ApiUrl:
     Description: Give this to person B (frontend API base URL)
@@ -269,3 +380,18 @@ Outputs:
     Value: !Ref Table
   ApiFunctionName:
     Value: !Ref ApiFunction
+  SiteUrl:
+    Description: Open this in the browser
+    Value: !Sub https://${SiteDistribution.DomainName}
+  SiteBucketName:
+    Value: !Ref SiteBucket
+  UserPoolId:
+    Value: !Ref UserPool
+  UserPoolClientId:
+    Value: !Ref UserPoolClient
+  Region:
+    Value: !Ref AWS::Region
+  SchedulerFunctionName:
+    Value: !Ref SchedulerFunction
+  DashboardName:
+    Value: !Sub ${AWS::StackName}-overview
