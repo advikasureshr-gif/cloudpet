@@ -142,6 +142,13 @@ Resources:
       RouteKey: GET /api/catalog
       AuthorizationType: NONE
       Target: !Sub integrations/${ApiIntegration}
+  RoutePreflight:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApiMain
+      RouteKey: OPTIONS /{proxy+}
+      AuthorizationType: NONE
+      Target: !Sub integrations/${ApiIntegration}
   RouteEverything:
     Type: AWS::ApiGatewayV2::Route
     Properties:
