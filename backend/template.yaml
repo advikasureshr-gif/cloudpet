@@ -27,6 +27,16 @@ Parameters:
     Type: String
     Default: "1"
     Description: Game-time speed-up for demos (1 = real time)
+  EnableCloudFront:
+    Type: String
+    Default: "true"
+    AllowedValues: ["true", "false"]
+    Description: false = serve the site straight from S3 (HTTP). Use only while AWS is still verifying the account for CloudFront.
+  EnableMonitoring:
+    Type: String
+    Default: "true"
+    AllowedValues: ["true", "false"]
+    Description: Creates the CloudWatch dashboard and alarms. Set false if the account is still being verified for CloudWatch.
   AlarmEmail:
     Type: String
     Default: ""
@@ -34,6 +44,9 @@ Parameters:
 
 Conditions:
   HasAlarmEmail: !Not [!Equals [!Ref AlarmEmail, ""]]
+  MonitoringOn: !Equals [!Ref EnableMonitoring, "true"]
+  UseCloudFront: !Equals [!Ref EnableCloudFront, "true"]
+  NoCloudFront: !Equals [!Ref EnableCloudFront, "false"]
 
 Globals:
   Function:
@@ -50,8 +63,8 @@ Globals:
         GROQ_MODEL: !Ref GroqModel
         MAIL_PROVIDER: ses
         MAIL_FROM: !Ref MailFrom
-        APP_URL: !Sub https://${SiteDistribution.DomainName}/home.html
-        CORS_ORIGIN: !Sub https://${SiteDistribution.DomainName}
+        APP_URL: !If [UseCloudFront, !Sub "https://${SiteDistribution.DomainName}/home.html", !Sub "http://${SiteBucket}.s3-website-${AWS::Region}.amazonaws.com/home.html"]
+        CORS_ORIGIN: !If [UseCloudFront, !Sub "https://${SiteDistribution.DomainName}", !Sub "http://${SiteBucket}.s3-website-${AWS::Region}.amazonaws.com"]
         DEMO_SECRET: !Ref DemoSecret
         TIME_SCALE: !Ref TimeScale
         DEFAULT_LAT: "13.08"
@@ -81,7 +94,7 @@ Resources:
       Name: cloudpet
       ProtocolType: HTTP
       CorsConfiguration:
-        AllowOrigins: [!Sub "https://${SiteDistribution.DomainName}", "http://localhost:8080"]
+        AllowOrigins: [!If [UseCloudFront, !Sub "https://${SiteDistribution.DomainName}", !Sub "http://${SiteBucket}.s3-website-${AWS::Region}.amazonaws.com"], "http://localhost:8080"]
         AllowMethods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
         AllowHeaders: [authorization, content-type, x-utc-offset-minutes, x-demo-secret]
         MaxAge: 600
@@ -209,16 +222,20 @@ Resources:
     DeletionPolicy: Delete
     UpdateReplacePolicy: Delete
     Properties:
-      PublicAccessBlockConfiguration:
-        BlockPublicAcls: true
-        BlockPublicPolicy: true
-        IgnorePublicAcls: true
-        RestrictPublicBuckets: true
+      PublicAccessBlockConfiguration: !If
+        - UseCloudFront
+        - { BlockPublicAcls: true, BlockPublicPolicy: true, IgnorePublicAcls: true, RestrictPublicBuckets: true }
+        - { BlockPublicAcls: true, BlockPublicPolicy: false, IgnorePublicAcls: true, RestrictPublicBuckets: false }
+      WebsiteConfiguration: !If
+        - UseCloudFront
+        - !Ref AWS::NoValue
+        - { IndexDocument: home.html, ErrorDocument: home.html }
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 }
 
   SiteOAC:
+    Condition: UseCloudFront
     Type: AWS::CloudFront::OriginAccessControl
     Properties:
       OriginAccessControlConfig:
@@ -228,6 +245,7 @@ Resources:
         SigningProtocol: sigv4
 
   SiteDistribution:
+    Condition: UseCloudFront
     Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
@@ -248,6 +266,7 @@ Resources:
           CachePolicyId: 4135ea2d-6df8-48a9-b4ea-2d3c8cd5f5c1   # CachingDisabled: edits show up immediately
 
   SiteBucketPolicy:
+    Condition: UseCloudFront
     Type: AWS::S3::BucketPolicy
     Properties:
       Bucket: !Ref SiteBucket
@@ -260,6 +279,18 @@ Resources:
             Condition:
               StringEquals:
                 AWS:SourceArn: !Sub arn:aws:cloudfront::${AWS::AccountId}:distribution/${SiteDistribution}
+
+  SiteBucketPublicPolicy:
+    Condition: NoCloudFront
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref SiteBucket
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action: s3:GetObject
+            Resource: !Sub ${SiteBucket.Arn}/*
 
   ApiFunction:
     Type: AWS::Serverless::Function
@@ -332,6 +363,7 @@ Resources:
       Endpoint: !Ref AlarmEmail
 
   ApiErrorsAlarm:
+    Condition: MonitoringOn
     Type: AWS::CloudWatch::Alarm
     Properties:
       AlarmDescription: API Lambda errors
@@ -346,6 +378,7 @@ Resources:
       TreatMissingData: notBreaching
       AlarmActions: [!Ref AlarmTopic]
   SchedulerErrorsAlarm:
+    Condition: MonitoringOn
     Type: AWS::CloudWatch::Alarm
     Properties:
       AlarmDescription: Scheduler Lambda errors
@@ -361,6 +394,7 @@ Resources:
       AlarmActions: [!Ref AlarmTopic]
 
   Dashboard:
+    Condition: MonitoringOn
     Type: AWS::CloudWatch::Dashboard
     Properties:
       DashboardName: !Sub ${AWS::StackName}-overview
@@ -382,7 +416,7 @@ Outputs:
     Value: !Ref ApiFunction
   SiteUrl:
     Description: Open this in the browser
-    Value: !Sub https://${SiteDistribution.DomainName}
+    Value: !If [UseCloudFront, !Sub "https://${SiteDistribution.DomainName}", !Sub "http://${SiteBucket}.s3-website-${AWS::Region}.amazonaws.com"]
   SiteBucketName:
     Value: !Ref SiteBucket
   UserPoolId:
@@ -394,4 +428,5 @@ Outputs:
   SchedulerFunctionName:
     Value: !Ref SchedulerFunction
   DashboardName:
+    Condition: MonitoringOn
     Value: !Sub ${AWS::StackName}-overview
