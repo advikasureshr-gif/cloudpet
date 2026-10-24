@@ -22,16 +22,9 @@ Everything below was created by **one CloudFormation stack named `cloudpet`**. S
 - Show `home.html`, `login.html`, `js/`, `animation_packs/`.
 - **Properties** tab, scroll to the bottom: **Static website hosting** is enabled, and this is the website URL.
 
-*Say:* "The frontend is plain HTML, CSS and JavaScript stored in S3 and served as a static website."
+*Say:* "The frontend is plain HTML, CSS and JavaScript stored in S3 and served directly as a static website."
 
-## 2. CloudFront – fast frontend delivery
-*Current status: the account was still being verified for CloudFront, so the site is served directly from S3.*
-- Show **CloudFormation > Stacks > cloudpet > Template** and point to the `SiteDistribution` resource and the `EnableCloudFront` parameter.
-- **If CloudFront has been enabled:** **CloudFront > Distributions**: show the distribution domain, the S3 origin, Origin Access Control, and "Redirect HTTP to HTTPS".
-
-*Say:* "CloudFront is part of the design. It is switched off by a parameter until AWS finishes verifying my account, and one redeploy turns it on."
-
-## 3. Cognito – user authentication
+## 2. Cognito – user authentication
 **Cognito > User pools > `cloudpet-users`**
 - **Users** tab: the account you just signed up with on the website appears here (sign up live, then refresh).
 - **App clients**: `cloudpet-web`, with no client secret.
@@ -39,7 +32,7 @@ Everything below was created by **one CloudFormation stack named `cloudpet`**. S
 
 *Say:* "Passwords never reach my backend. Cognito checks them and gives the browser a signed token."
 
-## 4. API Gateway – backend API
+## 3. API Gateway – backend API
 **API Gateway > APIs > `cloudpet` (HTTP API)**
 - **Routes**: `GET /api/health`, `GET /api/catalog` (public), `ANY /{proxy+}` with a JWT authorizer, `OPTIONS /{proxy+}` (CORS preflight).
 - **Authorization**: the JWT authorizer, with the issuer pointing to the Cognito pool.
@@ -48,7 +41,7 @@ Everything below was created by **one CloudFormation stack named `cloudpet`**. S
 
 *Say:* "Every route except health and catalog is rejected unless the Cognito token is valid."
 
-## 5. Lambda – serverless backend logic
+## 4. Lambda – serverless backend logic
 **Lambda > Functions**
 - `cloudpet-ApiFunction-...`: all the game logic (feeding, shop, rewards, chat, prediction). Open **Configuration > Environment variables** and show `AUTH_MODE=cognito`, `MAIL_PROVIDER=ses`, and `CHAT_PROVIDER=groq` (do **not** open the values of the key variables).
 - `cloudpet-SchedulerFunction-...`: runs on a schedule (next section).
@@ -57,7 +50,7 @@ Everything below was created by **one CloudFormation stack named `cloudpet`**. S
 
 *Say:* "No servers to manage. The code runs only when a request or schedule triggers it."
 
-## 6. DynamoDB – pet and user data
+## 5. DynamoDB – pet and user data
 **DynamoDB > Tables > `cloudpet-Table-...` > Explore table items**
 - Rows for your profile, pets (stats, equipped accessories), inventory and chat counters.
 - Click one pet row: show `hunger`, `happiness`, `lastTick`, `version`.
@@ -65,14 +58,14 @@ Everything below was created by **one CloudFormation stack named `cloudpet`**. S
 
 *Say:* "A single-table design with on-demand capacity, so it costs nothing when idle. The server enforces the game rules, so the browser can't cheat."
 
-## 7. EventBridge – scheduled pet updates
+## 6. EventBridge – scheduled pet updates
 **Amazon EventBridge > Scheduler > Schedules**
 - Open the schedule for `SchedulerFunction`: **rate(15 minutes)**, target the Lambda.
 - Then **Lambda > SchedulerFunction > Monitor > View CloudWatch logs**: each run prints a line like `{"pets":3,"updated":2,"players":1,"reminded":0,"neglected":0}`.
 
 *Say:* "Every 15 minutes this applies the passage of time to pets, predicts when each player usually visits, and sends the reminder email."
 
-## 8. SES (and SNS) – notifications
+## 7. SES (and SNS) – notifications
 **Amazon SES > Identities**: the verified sender address (region us-east-1).
 - Live demo: trigger the reminder (see "Live demo moves" below), then show the email in the inbox, click it, and watch the pet's happiness rise.
 
@@ -80,7 +73,7 @@ Everything below was created by **one CloudFormation stack named `cloudpet`**. S
 
 *Say:* "SES sends the reminder emails. SNS is the alert channel for operational alarms."
 
-## 9. CloudWatch – monitoring and logs
+## 8. CloudWatch – monitoring and logs
 **CloudWatch > Log groups**
 - `/aws/lambda/cloudpet-ApiFunction-...`: open the latest stream, and show a request with your sign-in.
 - `/aws/lambda/cloudpet-SchedulerFunction-...`: the schedule runs.
@@ -91,10 +84,10 @@ Everything below was created by **one CloudFormation stack named `cloudpet`**. S
 **If monitoring was enabled:** **Dashboards > `cloudpet-overview`** (requests, errors, latency, DynamoDB capacity) and **Alarms** (Lambda errors, with SNS email).
 *If not:* "The dashboard and alarms are defined in the template behind a switch; they get created once the account's CloudWatch verification completes."
 
-## 10. IAM – least privilege (optional, 20 s)
+## 9. IAM – least privilege (optional, 20 s)
 **IAM > Roles > `cloudpet-ApiFunctionRole-...`**: it can only read/write this one table and send SES email. No broad access.
 
-## 11. Billing – cost control
+## 10. Billing – cost control
 **Billing and Cost Management > Budgets:** the $5 budget alert. **Cost Explorer:** about $0 (credits cover it).
 At the end: `./scripts/teardown.sh` deletes everything, and Cost Explorer shows nothing running.
 
